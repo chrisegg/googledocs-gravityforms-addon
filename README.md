@@ -125,7 +125,6 @@ You can organize your documents by specifying a Google Drive folder ID in your f
 - Check that the Google Drive API is enabled in your Google Cloud Project
 - Verify that you've granted all requested permissions during OAuth setup
 
-```
 
 ## Changelog
 
