@@ -2,7 +2,7 @@
 /**
  * Main class for the Google Docs Add-On
  *
- * @package GRGoogleDocs
+ * @package GFGoogleDocs
  */
 
 if (!defined('ABSPATH')) {
@@ -18,18 +18,18 @@ if (!class_exists('GFForms')) {
 GFForms::include_feed_addon_framework();
 
 // Load the Google API handler
-require_once __DIR__ . '/class-gr-google-docs-api.php';
+require_once __DIR__ . '/class-gf-googledocs-api.php';
 
 /**
  * Main class for the Google Docs Add-On
  */
-class GR_Google_Docs extends GFFeedAddOn {
+class GFGoogleDocs extends GFFeedAddOn {
     /**
      * Contains an instance of this class, if available.
      *
      * @since  1.0
      * @access private
-     * @var    GR_Google_Docs $_instance If available, contains an instance of this class.
+     * @var    GFGoogleDocs $_instance If available, contains an instance of this class.
      */
     private static $_instance = null;
 
@@ -38,7 +38,7 @@ class GR_Google_Docs extends GFFeedAddOn {
      *
      * @since  1.0
      * @access private
-     * @var    GR_Google_Docs_API
+     * @var    GF_Google_Docs_API
      */
     private $api = null;
 
@@ -49,7 +49,7 @@ class GR_Google_Docs extends GFFeedAddOn {
      * @access protected
      * @var    string $_version Contains the version.
      */
-    protected $_version = GR_GOOGLE_DOCS_VERSION;
+    protected $_version = GF_GOOGLE_DOCS_VERSION;
 
     /**
      * Defines the minimum Gravity Forms version required.
@@ -58,7 +58,7 @@ class GR_Google_Docs extends GFFeedAddOn {
      * @access protected
      * @var    string $_min_gravityforms_version The minimum version required.
      */
-    protected $_min_gravityforms_version = GR_GOOGLE_DOCS_MIN_GF_VERSION;
+    protected $_min_gravityforms_version = GF_GOOGLE_DOCS_MIN_GF_VERSION;
 
     /**
      * Defines the plugin slug.
@@ -67,7 +67,7 @@ class GR_Google_Docs extends GFFeedAddOn {
      * @access protected
      * @var    string $_slug The slug used for this plugin.
      */
-    protected $_slug = 'google_docs';
+    protected $_slug = 'gravityformsgoogledocs';
 
     /**
      * Defines the main plugin file.
@@ -76,7 +76,7 @@ class GR_Google_Docs extends GFFeedAddOn {
      * @access protected
      * @var    string $_path The path to the main plugin file, relative to the plugins folder.
      */
-    protected $_path = 'gr-googledocs-addon/gr-google-docs-addon.php';
+    protected $_path = 'gravityformsgoogledocs/googledocs.php';
 
     /**
      * Defines the full path to this class file.
@@ -103,7 +103,7 @@ class GR_Google_Docs extends GFFeedAddOn {
      * @access protected
      * @var    string $_title The title of the Add-On.
      */
-    protected $_title = 'Google Docs Add-On for Gravity Forms';
+    protected $_title = 'Gravity Forms Google Docs Add-On';
 
     /**
      * Defines the short title of the Add-On.
@@ -130,7 +130,7 @@ class GR_Google_Docs extends GFFeedAddOn {
      * @access protected
      * @var    array $_capabilities The capabilities needed for the Add-On.
      */
-    protected $_capabilities = array('gravityforms_google_docs', 'gravityforms_google_docs_uninstall');
+    protected $_capabilities = array('gravityforms_googledocs', 'gravityforms_googledocs_uninstall');
 
     /**
      * Defines the capability needed to access the Add-On settings page.
@@ -139,7 +139,7 @@ class GR_Google_Docs extends GFFeedAddOn {
      * @access protected
      * @var    string $_capabilities_settings_page The capability needed to access the Add-On settings page.
      */
-    protected $_capabilities_settings_page = 'gravityforms_google_docs';
+    protected $_capabilities_settings_page = 'gravityforms_googledocs';
 
     /**
      * Defines the capability needed to access the Add-On form settings page.
@@ -148,7 +148,7 @@ class GR_Google_Docs extends GFFeedAddOn {
      * @access protected
      * @var    string $_capabilities_form_settings The capability needed to access the Add-On form settings page.
      */
-    protected $_capabilities_form_settings = 'gravityforms_google_docs';
+    protected $_capabilities_form_settings = 'gravityforms_googledocs';
 
     /**
      * Defines the capability needed to uninstall the Add-On.
@@ -157,7 +157,7 @@ class GR_Google_Docs extends GFFeedAddOn {
      * @access protected
      * @var    string $_capabilities_uninstall The capability needed to uninstall the Add-On.
      */
-    protected $_capabilities_uninstall = 'gravityforms_google_docs_uninstall';
+    protected $_capabilities_uninstall = 'gravityforms_googledocs_uninstall';
 
     /**
      * Enable async feed processing to prevent interference with notifications.
@@ -212,11 +212,11 @@ class GR_Google_Docs extends GFFeedAddOn {
      * @access public
      * @static
      *
-     * @return GR_Google_Docs
+     * @return GFGoogleDocs
      */
     public static function get_instance() {
         if (self::$_instance == null) {
-            self::$_instance = new GR_Google_Docs();
+            self::$_instance = new GFGoogleDocs();
         }
         return self::$_instance;
     }
@@ -231,7 +231,7 @@ class GR_Google_Docs extends GFFeedAddOn {
         parent::init();
 
         // Initialize the API handler
-        $this->api = new GR_Google_Docs_API();
+        $this->api = new GF_Google_Docs_API();
         
         // Add OAuth callback handler
         add_action('admin_init', array($this, 'handle_oauth_callback'));
@@ -280,7 +280,7 @@ class GR_Google_Docs extends GFFeedAddOn {
 
         // Return Google Docs notification events
         return array(
-            'google_docs_feed_failure' => esc_html__('Google Docs Feed Failure', 'gr-google-docs'),
+            'gfgoogledocs_feed_failure' => esc_html__('Google Docs Feed Failure', 'gravityformsgoogledocs'),
         );
     }
 
@@ -314,13 +314,13 @@ class GR_Google_Docs extends GFFeedAddOn {
             // Localize settings script
             wp_localize_script(
                 'gform_settings',
-                'grGoogleDocsSettings',
+                'gfGoogledocsSettings',
                 array(
                     'ajaxurl' => admin_url('admin-ajax.php'),
-                    'nonce' => wp_create_nonce('gr_google_docs_settings'),
+                    'nonce' => wp_create_nonce('gf_googledocs_settings'),
                     'strings' => array(
-                        'error' => esc_html__('Error:', 'gr-google-docs'),
-                        'success' => esc_html__('Success:', 'gr-google-docs'),
+                        'error' => esc_html__('Error:', 'gravityformsgoogledocs'),
+                        'success' => esc_html__('Success:', 'gravityformsgoogledocs'),
                     ),
                 )
             );
@@ -336,7 +336,7 @@ class GR_Google_Docs extends GFFeedAddOn {
     public function add_auth_button_css() {
         ?>
         <style>
-            .gr-google-docs-auth-button {
+            .gf-googledocs-auth-button {
                 display: inline-block;
                 text-decoration: none;
                 font-size: 14px;
@@ -358,14 +358,14 @@ class GR_Google_Docs extends GFFeedAddOn {
                 text-shadow: none;
             }
 
-            .gr-google-docs-auth-button:hover,
-            .gr-google-docs-auth-button:focus {
+            .gf-googledocs-auth-button:hover,
+            .gf-googledocs-auth-button:focus {
                 background: #135e96;
                 border-color: #135e96;
                 color: #fff;
             }
 
-            .gr-google-docs-auth-button:focus {
+            .gf-googledocs-auth-button:focus {
                 box-shadow: 0 0 0 1px #fff, 0 0 0 3px #2271b1;
             }
 
@@ -394,28 +394,28 @@ class GR_Google_Docs extends GFFeedAddOn {
                 border-color: #f5c2c7;
             }
 
-            .gr-google-docs-instructions {
+            .gf-googledocs-instructions {
                 background: #fff;
                 border-left: 4px solid #2271b1;
                 padding: 12px 15px;
                 margin: 15px 0;
             }
 
-            .gr-google-docs-instructions h4 {
+            .gf-googledocs-instructions h4 {
                 margin: 0 0 10px 0;
                 color: #23282d;
             }
 
-            .gr-google-docs-instructions ol {
+            .gf-googledocs-instructions ol {
                 margin: 0 0 10px 0;
                 padding-left: 20px;
             }
 
-            .gr-google-docs-instructions li {
+            .gf-googledocs-instructions li {
                 margin-bottom: 5px;
             }
 
-            .gr-google-docs-instructions p {
+            .gf-googledocs-instructions p {
                 margin: 0;
                 color: #666;
             }
@@ -433,22 +433,22 @@ class GR_Google_Docs extends GFFeedAddOn {
         try {
             // Only process if we're on the correct page and have the code parameter
             if (!isset($_GET['page']) || $_GET['page'] !== 'gf_settings' || 
-                !isset($_GET['subview']) || $_GET['subview'] !== 'google_docs' || 
+                !isset($_GET['subview']) || $_GET['subview'] !== 'gravityformsgoogledocs' || 
                 !isset($_GET['code'])) {
                 return;
             }
 
             // Verify user capabilities
             if (!current_user_can('gform_full_access')) {
-                wp_die(esc_html__('You do not have permission to access this page.', 'gr-google-docs'));
+                wp_die(esc_html__('You do not have permission to access this page.', 'gravityformsgoogledocs'));
             }
 
             // Verify state parameter for CSRF protection
-            if (!isset($_GET['state']) || !wp_verify_nonce($_GET['state'], 'gr_google_docs_oauth_state')) {
-                wp_die(esc_html__('Security check failed. Invalid OAuth state parameter.', 'gr-google-docs'));
+            if (!isset($_GET['state']) || !wp_verify_nonce($_GET['state'], 'gf_googledocs_oauth_state')) {
+                wp_die(esc_html__('Security check failed. Invalid OAuth state parameter.', 'gravityformsgoogledocs'));
             }
 
-            $debug_mode = defined('GR_GOOGLE_DOCS_DEBUG') && GR_GOOGLE_DOCS_DEBUG;
+            $debug_mode = defined('GF_GOOGLE_DOCS_DEBUG') && GF_GOOGLE_DOCS_DEBUG;
             
             if ($debug_mode) {
                 $this->log_debug(__METHOD__ . '(): Starting OAuth callback handling.');
@@ -458,11 +458,11 @@ class GR_Google_Docs extends GFFeedAddOn {
             // Get the authorization code and validate it
             $code = sanitize_text_field($_GET['code']);
             if (empty($code) || !preg_match('/^[a-zA-Z0-9\/_\-\.]+$/', $code)) {
-                wp_die(esc_html__('Invalid authorization code received.', 'gr-google-docs'));
+                wp_die(esc_html__('Invalid authorization code received.', 'gravityformsgoogledocs'));
             }
             
             // Initialize the API
-            $api = new GR_Google_Docs_API();
+            $api = new GF_Google_Docs_API();
             
             // Exchange the code for tokens
             $success = $api->handle_oauth_callback($code);
@@ -472,12 +472,12 @@ class GR_Google_Docs extends GFFeedAddOn {
                 $settings = $this->get_plugin_settings();
                 $this->update_plugin_settings($settings);
                 
-                GFCommon::add_message(esc_html__('Successfully authenticated with Google.', 'gr-google-docs'));
+                GFCommon::add_message(esc_html__('Successfully authenticated with Google.', 'gravityformsgoogledocs'));
                 if ($debug_mode) {
                     $this->log_debug(__METHOD__ . '(): Successfully authenticated with Google.');
                 }
             } else {
-                $error_message = esc_html__('Failed to authenticate with Google. Please try again.', 'gr-google-docs');
+                $error_message = esc_html__('Failed to authenticate with Google. Please try again.', 'gravityformsgoogledocs');
                 GFCommon::add_error_message($error_message);
                 $this->log_error(__METHOD__ . '(): ' . $error_message);
             }
@@ -486,14 +486,14 @@ class GR_Google_Docs extends GFFeedAddOn {
             wp_redirect(add_query_arg(
                 array(
                     'page' => 'gf_settings',
-                    'subview' => 'google_docs',
+                    'subview' => 'gravityformsgoogledocs',
                 ),
                 admin_url('admin.php')
             ));
             exit;
         } catch (Exception $e) {
             $this->log_error(__METHOD__ . '(): Error during OAuth callback. Error: ' . $e->getMessage());
-            wp_die(esc_html__('An error occurred during authentication. Please try again.', 'gr-google-docs'));
+            wp_die(esc_html__('An error occurred during authentication. Please try again.', 'gravityformsgoogledocs'));
         }
     }
 
@@ -504,30 +504,30 @@ class GR_Google_Docs extends GFFeedAddOn {
      * @access public
      */
     public function handle_disconnect() {
-        if (!isset($_GET['action']) || $_GET['action'] !== 'disconnect' || !isset($_GET['page']) || $_GET['page'] !== 'gf_settings' || !isset($_GET['subview']) || $_GET['subview'] !== 'google_docs') {
+        if (!isset($_GET['action']) || $_GET['action'] !== 'disconnect' || !isset($_GET['page']) || $_GET['page'] !== 'gf_settings' || !isset($_GET['subview']) || $_GET['subview'] !== 'gravityformsgoogledocs') {
             return;
         }
 
         // Verify user capabilities
         if (!current_user_can('gform_full_access')) {
-            wp_die(esc_html__('You do not have permission to access this page.', 'gr-google-docs'));
+            wp_die(esc_html__('You do not have permission to access this page.', 'gravityformsgoogledocs'));
         }
 
         // Verify nonce for security
-        if (!isset($_GET['nonce']) || !wp_verify_nonce($_GET['nonce'], 'gr_google_docs_disconnect')) {
-            wp_die(esc_html__('Security check failed. Please try again.', 'gr-google-docs'));
+        if (!isset($_GET['nonce']) || !wp_verify_nonce($_GET['nonce'], 'gf_googledocs_disconnect')) {
+            wp_die(esc_html__('Security check failed. Please try again.', 'gravityformsgoogledocs'));
         }
 
-        $api = new GR_Google_Docs_API();
+        $api = new GF_Google_Docs_API();
         $success = $api->disconnect();
 
         if ($success) {
-            GFCommon::add_message(esc_html__('Successfully disconnected from Google.', 'gr-google-docs'));
-            if (defined('GR_GOOGLE_DOCS_DEBUG') && GR_GOOGLE_DOCS_DEBUG) {
+            GFCommon::add_message(esc_html__('Successfully disconnected from Google.', 'gravityformsgoogledocs'));
+            if (defined('GF_GOOGLE_DOCS_DEBUG') && GF_GOOGLE_DOCS_DEBUG) {
                 $this->log_debug(__METHOD__ . '(): Successfully disconnected from Google.');
             }
         } else {
-            $error_message = esc_html__('Failed to disconnect from Google. Please try again.', 'gr-google-docs');
+            $error_message = esc_html__('Failed to disconnect from Google. Please try again.', 'gravityformsgoogledocs');
             GFCommon::add_error_message($error_message);
             $this->log_error(__METHOD__ . '(): ' . $error_message);
         }
@@ -536,7 +536,7 @@ class GR_Google_Docs extends GFFeedAddOn {
         wp_redirect(add_query_arg(
             array(
                 'page' => 'gf_settings',
-                'subview' => 'google_docs',
+                'subview' => 'gravityformsgoogledocs',
             ),
             admin_url('admin.php')
         ));
@@ -555,7 +555,7 @@ class GR_Google_Docs extends GFFeedAddOn {
     public function process_feed($feed, $entry, $form) {
         try {
             // Only log feed processing start in debug mode
-            if (defined('GR_GOOGLE_DOCS_DEBUG') && GR_GOOGLE_DOCS_DEBUG) {
+            if (defined('GF_GOOGLE_DOCS_DEBUG') && GF_GOOGLE_DOCS_DEBUG) {
                 $this->log_debug(__METHOD__ . '(): Processing feed.');
             }
 
@@ -575,12 +575,12 @@ class GR_Google_Docs extends GFFeedAddOn {
 
             // Initialize API if not already done
             if (!$this->api) {
-                $this->api = new GR_Google_Docs_API();
+                $this->api = new GF_Google_Docs_API();
             }
 
         // Check API authentication
         if (!$this->api->is_authenticated()) {
-            $this->add_feed_error(esc_html__('Feed was not processed because API was not authenticated.', 'gr-google-docs'), $feed, $entry, $form);
+            $this->add_feed_error(esc_html__('Feed was not processed because API was not authenticated.', 'gravityformsgoogledocs'), $feed, $entry, $form);
             return new WP_Error('api_not_authenticated', 'API was not authenticated.');
         }
 
@@ -589,7 +589,7 @@ class GR_Google_Docs extends GFFeedAddOn {
 
         if (is_wp_error($doc_id)) {
             $this->add_feed_error(sprintf(
-                esc_html__('Failed to create document: %s', 'gr-google-docs'),
+                esc_html__('Failed to create document: %s', 'gravityformsgoogledocs'),
                 $doc_id->get_error_message()
             ), $feed, $entry, $form);
             return $doc_id; // Return the WP_Error object
@@ -599,19 +599,19 @@ class GR_Google_Docs extends GFFeedAddOn {
         if (is_string($doc_id)) {
             // Validate document ID format
             if (!preg_match('/^[a-zA-Z0-9_-]{44}$/', $doc_id)) {
-                $this->add_feed_error(esc_html__('Invalid document ID format received from Google.', 'gr-google-docs'), $feed, $entry, $form);
+                $this->add_feed_error(esc_html__('Invalid document ID format received from Google.', 'gravityformsgoogledocs'), $feed, $entry, $form);
                 return new WP_Error('invalid_document_id', 'Invalid document ID format received from Google.');
             }
             
             $doc_url = 'https://docs.google.com/document/d/' . sanitize_text_field($doc_id) . '/edit';
             
             // Store the document info in entry meta
-            gform_update_meta($entry['id'], 'gr_google_doc_id', sanitize_text_field($doc_id));
-            gform_update_meta($entry['id'], 'gr_google_doc_url', esc_url_raw($doc_url));
+            gform_update_meta($entry['id'], 'gfgoogledocs_doc_id', sanitize_text_field($doc_id));
+            gform_update_meta($entry['id'], 'gfgoogledocs_doc_url', esc_url_raw($doc_url));
 
             // Add note using the framework's built-in note handling
             $this->add_note($entry['id'], sprintf(
-                esc_html__('Google Doc created successfully. View document at: %s', 'gr-google-docs'),
+                esc_html__('Google Doc created successfully. View document at: %s', 'gravityformsgoogledocs'),
                 $doc_url
             ), 'success');
 
@@ -620,11 +620,11 @@ class GR_Google_Docs extends GFFeedAddOn {
             return true;
         }
 
-            $this->add_feed_error(esc_html__('Invalid response format from Google Docs API', 'gr-google-docs'), $feed, $entry, $form);
+            $this->add_feed_error(esc_html__('Invalid response format from Google Docs API', 'gravityformsgoogledocs'), $feed, $entry, $form);
             return new WP_Error('invalid_response_format', 'Invalid response format from Google Docs API');
         } catch (Exception $e) {
             $error_message = sprintf(
-                esc_html__('Feed processing failed: %s', 'gr-google-docs'),
+                esc_html__('Feed processing failed: %s', 'gravityformsgoogledocs'),
                 $e->getMessage()
             );
             $this->add_feed_error($error_message, $feed, $entry, $form);
@@ -652,14 +652,14 @@ class GR_Google_Docs extends GFFeedAddOn {
         $this->add_note(
             rgar($entry, 'id'),
             sprintf(
-                esc_html__('Google Docs Feed Error: %s', 'gr-google-docs'),
+                esc_html__('Google Docs Feed Error: %s', 'gravityformsgoogledocs'),
                 $message
             ),
             'error'
         );
         
         // Also add entry meta for tracking
-        gform_update_meta(rgar($entry, 'id'), 'gr_google_docs_error', array(
+        gform_update_meta(rgar($entry, 'id'), 'gfgoogledocs_error', array(
             'message' => $message,
             'feed_id' => rgar($feed, 'id'),
             'timestamp' => current_time('mysql')
@@ -675,12 +675,12 @@ class GR_Google_Docs extends GFFeedAddOn {
     public function handle_document_type_change() {
         // Verify nonce for security
         if (!isset($_POST['_wpnonce']) || !wp_verify_nonce($_POST['_wpnonce'], 'gforms_save_feed')) {
-            wp_die(esc_html__('Security check failed. Please try again.', 'gr-google-docs'));
+            wp_die(esc_html__('Security check failed. Please try again.', 'gravityformsgoogledocs'));
         }
 
         // Verify user capabilities
         if (!current_user_can('gform_full_access')) {
-            wp_die(esc_html__('You do not have permission to perform this action.', 'gr-google-docs'));
+            wp_die(esc_html__('You do not have permission to perform this action.', 'gravityformsgoogledocs'));
         }
 
         if (!isset($_POST['_gform_setting_documentType'])) {
@@ -719,7 +719,7 @@ class GR_Google_Docs extends GFFeedAddOn {
         wp_redirect(add_query_arg(
             array(
                 'page' => 'gf_edit',
-                'subview' => 'google_docs',
+                'subview' => 'gravityformsgoogledocs',
                 'id' => $form_id,
                 'fid' => $feed_id,
             ),
@@ -739,58 +739,58 @@ class GR_Google_Docs extends GFFeedAddOn {
     public function feed_settings_fields() {
         return array(
             array(
-                'title'  => esc_html__('Feed Settings', 'gr-google-docs'),
+                'title'  => esc_html__('Feed Settings', 'gravityformsgoogledocs'),
                 'fields' => array(
                     array(
                         'name'     => 'feedName',
-                        'label'    => esc_html__('Name', 'gr-google-docs'),
+                        'label'    => esc_html__('Name', 'gravityformsgoogledocs'),
                         'type'     => 'text',
                         'required' => true,
                         'class'    => 'medium',
-                        'tooltip'  => esc_html__('Enter a name to uniquely identify this feed.', 'gr-google-docs')
+                        'tooltip'  => esc_html__('Enter a name to uniquely identify this feed.', 'gravityformsgoogledocs')
                     ),
                 )
             ),
             array(
-                'title'  => esc_html__('Document Settings', 'gr-google-docs'),
+                'title'  => esc_html__('Document Settings', 'gravityformsgoogledocs'),
                 'fields' => array(
                     array(
                         'name'          => 'documentTitle',
-                        'label'         => esc_html__('Document Title', 'gr-google-docs'),
+                        'label'         => esc_html__('Document Title', 'gravityformsgoogledocs'),
                         'type'          => 'text',
                         'required'      => true,
                         'class'         => 'merge-tag-support medium',
-                        'tooltip'       => esc_html__('Enter the title for the Google Doc. You can use merge tags like {Name:2} or {Date of Entry}. Maximum 400 characters.', 'gr-google-docs'),
-                        'placeholder'   => esc_html__('e.g., Application from {Name:2} - {Date of Entry}', 'gr-google-docs'),
+                        'tooltip'       => esc_html__('Enter the title for the Google Doc. You can use merge tags like {Name:2} or {Date of Entry}. Maximum 400 characters.', 'gravityformsgoogledocs'),
+                        'placeholder'   => esc_html__('e.g., Application from {Name:2} - {Date of Entry}', 'gravityformsgoogledocs'),
                     ),
                     array(
                         'name'          => 'documentContent',
-                        'label'         => esc_html__('Document Content', 'gr-google-docs'),
+                        'label'         => esc_html__('Document Content', 'gravityformsgoogledocs'),
                         'type'          => 'textarea',
                         'required'      => true,
                         'class'         => 'merge-tag-support medium',
-                        'tooltip'       => esc_html__('Enter the content template for the Google Doc. Use merge tags to include form data. Supports basic HTML formatting.', 'gr-google-docs'),
-                        'placeholder'   => esc_html__("Name: {Name:2}\nEmail: {Email:3}\nMessage: {Message:4}\n\nSubmitted on: {Date of Entry}", 'gr-google-docs'),
+                        'tooltip'       => esc_html__('Enter the content template for the Google Doc. Use merge tags to include form data. Supports basic HTML formatting.', 'gravityformsgoogledocs'),
+                        'placeholder'   => esc_html__("Name: {Name:2}\nEmail: {Email:3}\nMessage: {Message:4}\n\nSubmitted on: {Date of Entry}", 'gravityformsgoogledocs'),
                     ),
                     array(
                         'name'          => 'documentFolder',
-                        'label'         => esc_html__('Google Drive Folder ID (Optional)', 'gr-google-docs'),
+                        'label'         => esc_html__('Google Drive Folder ID (Optional)', 'gravityformsgoogledocs'),
                         'type'          => 'text',
                         'class'         => 'medium',
-                        'tooltip'       => esc_html__('Enter the Google Drive folder ID where documents should be created. Leave blank to create in your root Drive folder. Find this ID in the folder URL: https://drive.google.com/drive/folders/[FOLDER_ID]', 'gr-google-docs'),
-                        'placeholder'   => esc_html__('e.g., 1EM5x98stf2OItV9CFFw6r-qYmEHuZ5jA', 'gr-google-docs'),
+                        'tooltip'       => esc_html__('Enter the Google Drive folder ID where documents should be created. Leave blank to create in your root Drive folder. Find this ID in the folder URL: https://drive.google.com/drive/folders/[FOLDER_ID]', 'gravityformsgoogledocs'),
+                        'placeholder'   => esc_html__('e.g., 1EM5x98stf2OItV9CFFw6r-qYmEHuZ5jA', 'gravityformsgoogledocs'),
                     ),
                 ),
             ),
             array(
-                'title'  => esc_html__('Feed Conditional Logic', 'gr-google-docs'),
+                'title'  => esc_html__('Feed Conditional Logic', 'gravityformsgoogledocs'),
                 'fields' => array(
                     array(
                         'name'           => 'feedCondition',
                         'type'           => 'feed_condition',
-                        'label'          => esc_html__('Conditional Logic', 'gr-google-docs'),
-                        'checkbox_label' => esc_html__('Enable', 'gr-google-docs'),
-                        'instructions'   => esc_html__('Export to Google Docs if', 'gr-google-docs'),
+                        'label'          => esc_html__('Conditional Logic', 'gravityformsgoogledocs'),
+                        'checkbox_label' => esc_html__('Enable', 'gravityformsgoogledocs'),
+                        'instructions'   => esc_html__('Export to Google Docs if', 'gravityformsgoogledocs'),
                     ),
                 ),
             ),
@@ -805,11 +805,11 @@ class GR_Google_Docs extends GFFeedAddOn {
     public function get_field_map() {
         return array(
             array(
-                'label' => esc_html__('Select a Template Variable', 'gr-google-docs'),
+                'label' => esc_html__('Select a Template Variable', 'gravityformsgoogledocs'),
                 'value' => '',
             ),
             array(
-                'label' => esc_html__('Add New Template Variable', 'gr-google-docs'),
+                'label' => esc_html__('Add New Template Variable', 'gravityformsgoogledocs'),
                 'value' => 'gf_custom',
             ),
         );
@@ -822,8 +822,8 @@ class GR_Google_Docs extends GFFeedAddOn {
      */
     public function feed_list_columns() {
         return array(
-            'feedName' => esc_html__('Name', 'gr-google-docs'),
-            'documentTitle' => esc_html__('Document Title', 'gr-google-docs'),
+            'feedName' => esc_html__('Name', 'gravityformsgoogledocs'),
+            'documentTitle' => esc_html__('Document Title', 'gravityformsgoogledocs'),
         );
     }
 
@@ -855,73 +855,73 @@ class GR_Google_Docs extends GFFeedAddOn {
     public function plugin_settings_fields() {
         return array(
             array(
-                'title'  => esc_html__('Google Docs Settings', 'gr-google-docs'),
-                'description' => '<p>' . esc_html__('Connect your site to Google Docs to enable document creation from form submissions.', 'gr-google-docs') . '</p>
-                    <div class="gr-google-docs-instructions">
-                        <h4>' . esc_html__('How to Set Up:', 'gr-google-docs') . '</h4>
+                'title'  => esc_html__('Google Docs Settings', 'gravityformsgoogledocs'),
+                'description' => '<p>' . esc_html__('Connect your site to Google Docs to enable document creation from form submissions.', 'gravityformsgoogledocs') . '</p>
+                    <div class="gf-googledocs-instructions">
+                        <h4>' . esc_html__('How to Set Up:', 'gravityformsgoogledocs') . '</h4>
                         <ol>
                             <li>' . sprintf(
-                                esc_html__('Go to the %sGoogle Cloud Console%s.', 'gr-google-docs'),
+                                esc_html__('Go to the %sGoogle Cloud Console%s.', 'gravityformsgoogledocs'),
                                 '<a href="https://console.cloud.google.com/" target="_blank">',
                                 '</a>'
                             ) . '</li>
-                            <li>' . esc_html__('Create a new project or select an existing one.', 'gr-google-docs') . '</li>
-                            <li>' . esc_html__('Enable the Google Docs API and Google Drive API for your project.', 'gr-google-docs') . '</li>
-                            <li>' . esc_html__('Go to Credentials and create OAuth 2.0 Client ID credentials (Web Application).', 'gr-google-docs') . '</li>
-                            <li>' . esc_html__('Add your site\'s domain to the authorized domains.', 'gr-google-docs') . '</li>
-                            <li>' . esc_html__('Add the redirect URI: ', 'gr-google-docs') . '<code>' . esc_url(add_query_arg(
+                            <li>' . esc_html__('Create a new project or select an existing one.', 'gravityformsgoogledocs') . '</li>
+                            <li>' . esc_html__('Enable the Google Docs API and Google Drive API for your project.', 'gravityformsgoogledocs') . '</li>
+                            <li>' . esc_html__('Go to Credentials and create OAuth 2.0 Client ID credentials (Web Application).', 'gravityformsgoogledocs') . '</li>
+                            <li>' . esc_html__('Add your site\'s domain to the authorized domains.', 'gravityformsgoogledocs') . '</li>
+                            <li>' . esc_html__('Add the redirect URI: ', 'gravityformsgoogledocs') . '<code>' . esc_url(add_query_arg(
                                 array(
                                     'page' => 'gf_settings',
-                                    'subview' => 'google_docs'
+                                    'subview' => 'gravityformsgoogledocs'
                                 ),
                                 admin_url('admin.php')
                             )) . '</code></li>
-                            <li>' . esc_html__('Copy the Client ID and Client Secret below.', 'gr-google-docs') . '</li>
-                            <li>' . esc_html__('Click "Save Settings" and then "Connect with Google".', 'gr-google-docs') . '</li>
+                            <li>' . esc_html__('Copy the Client ID and Client Secret below.', 'gravityformsgoogledocs') . '</li>
+                            <li>' . esc_html__('Click "Save Settings" and then "Connect with Google".', 'gravityformsgoogledocs') . '</li>
                         </ol>
-                        <p>' . esc_html__('Once connected, you can create feeds in your forms to automatically create Google Docs from form submissions.', 'gr-google-docs') . '</p>
+                        <p>' . esc_html__('Once connected, you can create feeds in your forms to automatically create Google Docs from form submissions.', 'gravityformsgoogledocs') . '</p>
                     </div>',
                 'fields' => array(
                     array(
                         'name'              => 'client_id',
-                        'label'             => esc_html__('Google OAuth Client ID', 'gr-google-docs'),
+                        'label'             => esc_html__('Google OAuth Client ID', 'gravityformsgoogledocs'),
                         'type'              => 'text',
                         'class'             => 'medium',
                         'feedback_callback' => array($this, 'is_valid_setting'),
-                        'tooltip'           => esc_html__('Enter your Google OAuth 2.0 Client ID from the Google Cloud Console. This looks like: 123456789-abcdefg.googleusercontent.com', 'gr-google-docs'),
-                        'placeholder'       => esc_html__('e.g., 123456789-abcdefg.googleusercontent.com', 'gr-google-docs'),
+                        'tooltip'           => esc_html__('Enter your Google OAuth 2.0 Client ID from the Google Cloud Console. This looks like: 123456789-abcdefg.googleusercontent.com', 'gravityformsgoogledocs'),
+                        'placeholder'       => esc_html__('e.g., 123456789-abcdefg.googleusercontent.com', 'gravityformsgoogledocs'),
                     ),
                     array(
                         'name'              => 'client_secret',
-                        'label'             => esc_html__('Google OAuth Client Secret', 'gr-google-docs'),
+                        'label'             => esc_html__('Google OAuth Client Secret', 'gravityformsgoogledocs'),
                         'type'              => 'text',
                         'class'             => 'medium',
                         'feedback_callback' => array($this, 'is_valid_setting'),
-                        'tooltip'           => esc_html__('Enter your Google OAuth 2.0 Client Secret from the Google Cloud Console. Keep this value confidential.', 'gr-google-docs'),
-                        'placeholder'       => esc_html__('e.g., GOCSPX-1234567890abcdefghijklmnop', 'gr-google-docs'),
+                        'tooltip'           => esc_html__('Enter your Google OAuth 2.0 Client Secret from the Google Cloud Console. Keep this value confidential.', 'gravityformsgoogledocs'),
+                        'placeholder'       => esc_html__('e.g., GOCSPX-1234567890abcdefghijklmnop', 'gravityformsgoogledocs'),
                     ),
                     array(
                         'name'              => 'rate_limit',
-                        'label'             => esc_html__('API Rate Limit (per minute)', 'gr-google-docs'),
+                        'label'             => esc_html__('API Rate Limit (per minute)', 'gravityformsgoogledocs'),
                         'type'              => 'text',
                         'class'             => 'small',
                         'default_value'     => '100',
-                        'tooltip'           => esc_html__('Maximum number of API requests per minute. Default: 100', 'gr-google-docs'),
+                        'tooltip'           => esc_html__('Maximum number of API requests per minute. Default: 100', 'gravityformsgoogledocs'),
                     ),
                     array(
                         'type'    => 'save',
                         'messages' => array(
-                            'success' => esc_html__('Settings have been saved. You can now connect with Google.', 'gr-google-docs'),
+                            'success' => esc_html__('Settings have been saved. You can now connect with Google.', 'gravityformsgoogledocs'),
                         ),
                     ),
                     array(
                         'type'    => 'auth_button',
                         'name'    => 'auth_button',
-                        'label'   => esc_html__('Authentication', 'gr-google-docs'),
-                        'tooltip' => esc_html__('Click to connect or disconnect from Google Docs.', 'gr-google-docs'),
+                        'label'   => esc_html__('Authentication', 'gravityformsgoogledocs'),
+                        'tooltip' => esc_html__('Click to connect or disconnect from Google Docs.', 'gravityformsgoogledocs'),
                     ),
                     array(
-                        'type' => 'google_docs_status_message',
+                        'type' => 'gfgoogledocs_status_message',
                     ),
                 ),
             ),
@@ -941,7 +941,7 @@ class GR_Google_Docs extends GFFeedAddOn {
      */
     public function render_auth_button($field, $echo = true) {
         try {
-            $api = new GR_Google_Docs_API();
+            $api = new GF_Google_Docs_API();
             
             // Check if we have valid client credentials first
             $client_id = $this->get_plugin_setting('client_id');
@@ -949,36 +949,36 @@ class GR_Google_Docs extends GFFeedAddOn {
             
             if (empty($client_id) || empty($client_secret)) {
                 $html = '<div class="alert alert-warning">' . 
-                    esc_html__('Please enter your Google OAuth credentials above and save settings before connecting.', 'gr-google-docs') . 
+                    esc_html__('Please enter your Google OAuth credentials above and save settings before connecting.', 'gravityformsgoogledocs') . 
                     '</div>';
             } else {
                 // Check if we're authenticated
                 if ($api->is_authenticated()) {
                     $html = sprintf(
-                        '<a href="%s" class="gr-google-docs-auth-button">%s</a>',
+                        '<a href="%s" class="gf-googledocs-auth-button">%s</a>',
                         esc_url(add_query_arg(
                             array(
                                 'page' => 'gf_settings',
-                                'subview' => 'google_docs',
+                                'subview' => 'gravityformsgoogledocs',
                                 'action' => 'disconnect',
-                                'nonce' => wp_create_nonce('gr_google_docs_disconnect'),
+                                'nonce' => wp_create_nonce('gf_googledocs_disconnect'),
                             ),
                             admin_url('admin.php')
                         )),
-                        esc_html__('Disconnect from Google', 'gr-google-docs')
+                        esc_html__('Disconnect from Google', 'gravityformsgoogledocs')
                     );
 
                 } else {
                     $auth_url = $api->get_auth_url();
                     if (!empty($auth_url)) {
                         $html = sprintf(
-                            '<a href="%s" class="gr-google-docs-auth-button">%s</a>',
+                            '<a href="%s" class="gf-googledocs-auth-button">%s</a>',
                             esc_url($auth_url),
-                            esc_html__('Connect with Google', 'gr-google-docs')
+                            esc_html__('Connect with Google', 'gravityformsgoogledocs')
                         );
                     } else {
                         $html = '<div class="alert alert-error">' . 
-                            esc_html__('Unable to generate authentication URL. Please check your credentials.', 'gr-google-docs') . 
+                            esc_html__('Unable to generate authentication URL. Please check your credentials.', 'gravityformsgoogledocs') . 
                             '</div>';
                     }
                 }
@@ -992,7 +992,7 @@ class GR_Google_Docs extends GFFeedAddOn {
         } catch (Exception $e) {
             $this->log_error(__METHOD__ . '(): Error rendering auth button. Error: ' . $e->getMessage());
             $error_message = '<div class="alert alert-error">' . 
-                esc_html__('Error rendering authentication button. Please check the logs.', 'gr-google-docs') . 
+                esc_html__('Error rendering authentication button. Please check the logs.', 'gravityformsgoogledocs') . 
                 '</div>';
             
             if ($echo) {
@@ -1008,7 +1008,7 @@ class GR_Google_Docs extends GFFeedAddOn {
      * @since  1.0
      * @access public
      */
-    public function settings_google_docs_status_message() {
+    public function settings_gfgoogledocs_status_message() {
         $client_id = $this->get_plugin_setting('client_id');
         $client_secret = $this->get_plugin_setting('client_secret');
         
@@ -1018,16 +1018,16 @@ class GR_Google_Docs extends GFFeedAddOn {
         }
 
         try {
-            $api = new GR_Google_Docs_API();
+            $api = new GF_Google_Docs_API();
             
             // Check if we have a stored access token (indicating a connection attempt was made)
-            $has_token = get_option('gr_google_docs_access_token');
+            $has_token = get_option('gf_googledocs_access_token');
             
             if (!$has_token) {
                 // No connection attempt made yet - show neutral "ready to connect" message
                 printf(
                     '<div class="alert" style="background-color: #f0f8ff; border-color: #0073aa; color: #0073aa;">%s</div>',
-                    esc_html__('Ready to connect. Click "Connect with Google" above to authenticate.', 'gr-google-docs')
+                    esc_html__('Ready to connect. Click "Connect with Google" above to authenticate.', 'gravityformsgoogledocs')
                 );
                 return;
             }
@@ -1038,7 +1038,7 @@ class GR_Google_Docs extends GFFeedAddOn {
             if (!$account_info) {
                 printf(
                     '<div class="alert gforms_note_error">%s</div>',
-                    esc_html__('Connection failed. Please check your credentials and try connecting again.', 'gr-google-docs')
+                    esc_html__('Connection failed. Please check your credentials and try connecting again.', 'gravityformsgoogledocs')
                 );
                 return;
             }
@@ -1046,14 +1046,14 @@ class GR_Google_Docs extends GFFeedAddOn {
             // Display success message with checkmark styling
             printf(
                 '<div class="alert gforms_note_success">%s<br/>%s: %s</div>',
-                esc_html__('Successfully connected to Google Docs!', 'gr-google-docs'),
-                esc_html__('Account Email', 'gr-google-docs'),
+                esc_html__('Successfully connected to Google Docs!', 'gravityformsgoogledocs'),
+                esc_html__('Account Email', 'gravityformsgoogledocs'),
                 esc_html($account_info['email'])
             );
         } catch (Exception $e) {
             printf(
                 '<div class="alert gforms_note_error">%s</div>',
-                esc_html__('Unable to verify connection status.', 'gr-google-docs')
+                esc_html__('Unable to verify connection status.', 'gravityformsgoogledocs')
             );
         }
     }
@@ -1078,7 +1078,7 @@ class GR_Google_Docs extends GFFeedAddOn {
 
         // Validate inputs
         if (!is_array($form) || !is_array($entry)) {
-            if (defined('GR_GOOGLE_DOCS_DEBUG') && GR_GOOGLE_DOCS_DEBUG) {
+            if (defined('GF_GOOGLE_DOCS_DEBUG') && GF_GOOGLE_DOCS_DEBUG) {
                 $this->log_debug(__METHOD__ . '(): Invalid form or entry data provided for merge tag processing');
             }
             return $template;
@@ -1090,7 +1090,7 @@ class GR_Google_Docs extends GFFeedAddOn {
         // Check if we have cached result (short cache for performance)
         static $merge_cache = array();
         if (isset($merge_cache[$cache_key])) {
-            if (defined('GR_GOOGLE_DOCS_DEBUG') && GR_GOOGLE_DOCS_DEBUG) {
+            if (defined('GF_GOOGLE_DOCS_DEBUG') && GF_GOOGLE_DOCS_DEBUG) {
                 $this->log_debug(__METHOD__ . '(): Using cached merge tag result');
             }
             return $merge_cache[$cache_key];
@@ -1123,7 +1123,7 @@ class GR_Google_Docs extends GFFeedAddOn {
                 $merge_cache[$cache_key] = $processed;
             }
 
-            if (defined('GR_GOOGLE_DOCS_DEBUG') && GR_GOOGLE_DOCS_DEBUG) {
+            if (defined('GF_GOOGLE_DOCS_DEBUG') && GF_GOOGLE_DOCS_DEBUG) {
                 $this->log_debug(__METHOD__ . '(): Successfully processed merge tags');
             }
 
@@ -1155,7 +1155,7 @@ class GR_Google_Docs extends GFFeedAddOn {
         $this->log_error($log_message);
         
         // Log additional data in debug mode
-        if (defined('GR_GOOGLE_DOCS_DEBUG') && GR_GOOGLE_DOCS_DEBUG && !empty($data)) {
+        if (defined('GF_GOOGLE_DOCS_DEBUG') && GF_GOOGLE_DOCS_DEBUG && !empty($data)) {
             $this->log_debug('Additional error data: ' . wp_json_encode($data));
         }
         
@@ -1164,7 +1164,7 @@ class GR_Google_Docs extends GFFeedAddOn {
             add_action('admin_notices', function() use ($error_message) {
                 printf(
                     '<div class="notice notice-error"><p><strong>%s:</strong> %s</p></div>',
-                    esc_html__('Google Docs Add-On Error', 'gr-google-docs'),
+                    esc_html__('Google Docs Add-On Error', 'gravityformsgoogledocs'),
                     esc_html($error_message)
                 );
             });
@@ -1191,7 +1191,7 @@ class GR_Google_Docs extends GFFeedAddOn {
         
         // Check if API is authenticated
         try {
-            $api = new GR_Google_Docs_API();
+            $api = new GF_Google_Docs_API();
             return $api->is_authenticated();
         } catch (Exception $e) {
             $this->log_error(__METHOD__ . '(): Error checking authentication: ' . $e->getMessage());
@@ -1249,19 +1249,19 @@ class GR_Google_Docs extends GFFeedAddOn {
             
             // If credentials changed, clear the stored token so status resets
             if ($current_client_id !== $new_client_id || $current_client_secret !== $new_client_secret) {
-                delete_option('gr_google_docs_access_token');
+                delete_option('gf_googledocs_access_token');
                 
-                if (defined('GR_GOOGLE_DOCS_DEBUG') && GR_GOOGLE_DOCS_DEBUG) {
+                if (defined('GF_GOOGLE_DOCS_DEBUG') && GF_GOOGLE_DOCS_DEBUG) {
                     $this->log_debug(__METHOD__ . '(): Cleared access token due to credential change');
                 }
             }
             
             // Clear cache when settings change to force re-validation
             if (!empty($settings['client_id']) && !empty($settings['client_secret'])) {
-                $api = new GR_Google_Docs_API();
+                $api = new GF_Google_Docs_API();
                 $api->clear_all_cache();
                 
-                if (defined('GR_GOOGLE_DOCS_DEBUG') && GR_GOOGLE_DOCS_DEBUG) {
+                if (defined('GF_GOOGLE_DOCS_DEBUG') && GF_GOOGLE_DOCS_DEBUG) {
                     $this->log_debug(__METHOD__ . '(): Cleared API cache due to settings change');
                 }
             }
@@ -1288,7 +1288,7 @@ class GR_Google_Docs extends GFFeedAddOn {
      */
     public function add_form_settings_menu($menu_items, $form_id) {
         $menu_items[] = array(
-            'name'          => 'google_docs',
+            'name'          => 'gravityformsgoogledocs',
             'label'         => $this->_short_title,
             'icon'          => 'fa-google',
             'callback'      => array($this, 'feed_settings_page'),
@@ -1306,7 +1306,7 @@ class GR_Google_Docs extends GFFeedAddOn {
     public function feed_settings_page() {
         try {
             // Only log detailed steps if debug mode is enabled
-            $debug_mode = defined('GR_GOOGLE_DOCS_DEBUG') && GR_GOOGLE_DOCS_DEBUG;
+            $debug_mode = defined('GF_GOOGLE_DOCS_DEBUG') && GF_GOOGLE_DOCS_DEBUG;
             
             if ($debug_mode) {
                 $this->log_debug(__METHOD__ . '(): Starting to render feed settings page.');
@@ -1316,14 +1316,14 @@ class GR_Google_Docs extends GFFeedAddOn {
             $form_id = rgget('id');
             if (empty($form_id)) {
                 $this->log_error(__METHOD__ . '(): No form ID provided.');
-                wp_die(esc_html__('No form ID provided.', 'gr-google-docs'));
+                wp_die(esc_html__('No form ID provided.', 'gravityformsgoogledocs'));
             }
 
             // Get form
             $form = GFAPI::get_form($form_id);
             if (!$form) {
                 $this->log_error(__METHOD__ . '(): Form not found.');
-                wp_die(esc_html__('Form not found.', 'gr-google-docs'));
+                wp_die(esc_html__('Form not found.', 'gravityformsgoogledocs'));
             }
 
             if ($debug_mode) {
@@ -1341,7 +1341,7 @@ class GR_Google_Docs extends GFFeedAddOn {
             }
         } catch (Exception $e) {
             $this->log_error(__METHOD__ . '(): Error rendering feed settings page: ' . $e->getMessage());
-            wp_die(esc_html__('Error loading feed settings page.', 'gr-google-docs'));
+            wp_die(esc_html__('Error loading feed settings page.', 'gravityformsgoogledocs'));
         }
     }
 
@@ -1359,18 +1359,18 @@ class GR_Google_Docs extends GFFeedAddOn {
         try {
             $choices = array(
                 array(
-                    'label' => esc_html__('Select a Template', 'gr-google-docs'),
+                    'label' => esc_html__('Select a Template', 'gravityformsgoogledocs'),
                     'value' => '',
                 ),
             );
 
             // Get API instance
-            $api = new GR_Google_Docs_API();
+            $api = new GF_Google_Docs_API();
 
             // Check if we're authenticated
             if (!$api->is_authenticated()) {
                 $choices[] = array(
-                    'label' => esc_html__('Please connect to Google first', 'gr-google-docs'),
+                    'label' => esc_html__('Please connect to Google first', 'gravityformsgoogledocs'),
                     'value' => 'not_connected',
                 );
                 return $choices;
@@ -1380,7 +1380,7 @@ class GR_Google_Docs extends GFFeedAddOn {
             $documents = $api->list_documents();
             if (is_wp_error($documents)) {
                 $choices[] = array(
-                    'label' => esc_html__('Error loading templates', 'gr-google-docs'),
+                    'label' => esc_html__('Error loading templates', 'gravityformsgoogledocs'),
                     'value' => 'error',
                 );
                 return $choices;
@@ -1399,7 +1399,7 @@ class GR_Google_Docs extends GFFeedAddOn {
             $this->log_error(__METHOD__ . '(): Error getting template choices. Error: ' . $e->getMessage());
             return array(
                 array(
-                    'label' => esc_html__('Error loading templates', 'gr-google-docs'),
+                    'label' => esc_html__('Error loading templates', 'gravityformsgoogledocs'),
                     'value' => 'error',
                 ),
             );
@@ -1425,19 +1425,19 @@ class GR_Google_Docs extends GFFeedAddOn {
             
             // Validate feed name
             if (empty($feed_meta['feedName'])) {
-                $this->set_field_error('feedName', esc_html__('Please enter a feed name.', 'gr-google-docs'));
+                $this->set_field_error('feedName', esc_html__('Please enter a feed name.', 'gravityformsgoogledocs'));
                 return false;
             }
             
             // Validate document title
             if (empty($feed_meta['documentTitle'])) {
-                $this->set_field_error('documentTitle', esc_html__('Please enter a document title.', 'gr-google-docs'));
+                $this->set_field_error('documentTitle', esc_html__('Please enter a document title.', 'gravityformsgoogledocs'));
                 return false;
             }
             
             // Validate document content
             if (empty($feed_meta['documentContent'])) {
-                $this->set_field_error('documentContent', esc_html__('Please enter document content.', 'gr-google-docs'));
+                $this->set_field_error('documentContent', esc_html__('Please enter document content.', 'gravityformsgoogledocs'));
                 return false;
             }
             
@@ -1446,7 +1446,7 @@ class GR_Google_Docs extends GFFeedAddOn {
             if (strpos($content, '{') !== false) {
                 // Basic merge tag validation
                 if (!preg_match('/\{[^}]+\}/', $content)) {
-                    $this->set_field_error('documentContent', esc_html__('Invalid merge tag format detected.', 'gr-google-docs'));
+                    $this->set_field_error('documentContent', esc_html__('Invalid merge tag format detected.', 'gravityformsgoogledocs'));
                     return false;
                 }
             }
@@ -1479,29 +1479,29 @@ class GR_Google_Docs extends GFFeedAddOn {
             
             // Validate client ID
             if (empty($settings['client_id'])) {
-                $this->set_field_error('client_id', esc_html__('Please enter your Google Client ID.', 'gr-google-docs'));
+                $this->set_field_error('client_id', esc_html__('Please enter your Google Client ID.', 'gravityformsgoogledocs'));
             }
             
             // Validate client secret
             if (empty($settings['client_secret'])) {
-                $this->set_field_error('client_secret', esc_html__('Please enter your Google Client Secret.', 'gr-google-docs'));
+                $this->set_field_error('client_secret', esc_html__('Please enter your Google Client Secret.', 'gravityformsgoogledocs'));
             }
             
             // Validate client ID format
             if (!empty($settings['client_id']) && !preg_match('/^[0-9]+-[a-zA-Z0-9_]+\.apps\.googleusercontent\.com$/', $settings['client_id'])) {
-                $this->set_field_error('client_id', esc_html__('Invalid Google Client ID format.', 'gr-google-docs'));
+                $this->set_field_error('client_id', esc_html__('Invalid Google Client ID format.', 'gravityformsgoogledocs'));
             }
             
             // Validate client secret format
             if (!empty($settings['client_secret']) && strlen($settings['client_secret']) < 20) {
-                $this->set_field_error('client_secret', esc_html__('Invalid Google Client Secret format.', 'gr-google-docs'));
+                $this->set_field_error('client_secret', esc_html__('Invalid Google Client Secret format.', 'gravityformsgoogledocs'));
             }
             
             // Validate rate limit
             if (isset($settings['rate_limit'])) {
                 $rate_limit = absint($settings['rate_limit']);
                 if ($rate_limit < 1 || $rate_limit > 1000) {
-                    $this->set_field_error('rate_limit', esc_html__('Rate limit must be between 1 and 1000 requests per minute.', 'gr-google-docs'));
+                    $this->set_field_error('rate_limit', esc_html__('Rate limit must be between 1 and 1000 requests per minute.', 'gravityformsgoogledocs'));
                 } else {
                     $settings['rate_limit'] = $rate_limit;
                 }
@@ -1527,7 +1527,7 @@ class GR_Google_Docs extends GFFeedAddOn {
                 $group['fields'][] = array(
                     'class' => 'button',
                     'data-type' => 'auth_button',
-                    'value' => esc_html__('Auth Button', 'gr-google-docs'),
+                    'value' => esc_html__('Auth Button', 'gravityformsgoogledocs'),
                 );
                 break;
             }
@@ -1602,7 +1602,7 @@ class GR_Google_Docs extends GFFeedAddOn {
      */
     public function settings_auth_button($field, $echo = true) {
         try {
-            $api = new GR_Google_Docs_API();
+            $api = new GF_Google_Docs_API();
             
             // Check if we have valid client credentials first
             $client_id = $this->get_plugin_setting('client_id');
@@ -1610,36 +1610,36 @@ class GR_Google_Docs extends GFFeedAddOn {
             
             if (empty($client_id) || empty($client_secret)) {
                 $html = '<div class="alert alert-warning">' . 
-                    esc_html__('Please enter your Google OAuth credentials above and save settings before connecting.', 'gr-google-docs') . 
+                    esc_html__('Please enter your Google OAuth credentials above and save settings before connecting.', 'gravityformsgoogledocs') . 
                     '</div>';
             } else {
                 // Check if we're authenticated
                 if ($api->is_authenticated()) {
                     $html = sprintf(
-                        '<a href="%s" class="gr-google-docs-auth-button">%s</a>',
+                        '<a href="%s" class="gf-googledocs-auth-button">%s</a>',
                         esc_url(add_query_arg(
                             array(
                                 'page' => 'gf_settings',
-                                'subview' => 'google_docs',
+                                'subview' => 'gravityformsgoogledocs',
                                 'action' => 'disconnect',
-                                'nonce' => wp_create_nonce('gr_google_docs_disconnect'),
+                                'nonce' => wp_create_nonce('gf_googledocs_disconnect'),
                             ),
                             admin_url('admin.php')
                         )),
-                        esc_html__('Disconnect from Google', 'gr-google-docs')
+                        esc_html__('Disconnect from Google', 'gravityformsgoogledocs')
                     );
 
                 } else {
                     $auth_url = $api->get_auth_url();
                     if (!empty($auth_url)) {
                         $html = sprintf(
-                            '<a href="%s" class="gr-google-docs-auth-button">%s</a>',
+                            '<a href="%s" class="gf-googledocs-auth-button">%s</a>',
                             esc_url($auth_url),
-                            esc_html__('Connect with Google', 'gr-google-docs')
+                            esc_html__('Connect with Google', 'gravityformsgoogledocs')
                         );
                     } else {
                         $html = '<div class="alert alert-error">' . 
-                            esc_html__('Unable to generate authentication URL. Please check your credentials.', 'gr-google-docs') . 
+                            esc_html__('Unable to generate authentication URL. Please check your credentials.', 'gravityformsgoogledocs') . 
                             '</div>';
                     }
                 }
@@ -1653,7 +1653,7 @@ class GR_Google_Docs extends GFFeedAddOn {
         } catch (Exception $e) {
             $this->log_error(__METHOD__ . '(): Error rendering auth button. Error: ' . $e->getMessage());
             $error_message = '<div class="alert alert-error">' . 
-                esc_html__('Error rendering authentication button. Please check the logs.', 'gr-google-docs') . 
+                esc_html__('Error rendering authentication button. Please check the logs.', 'gravityformsgoogledocs') . 
                 '</div>';
             
             if ($echo) {
