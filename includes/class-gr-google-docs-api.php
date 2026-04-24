@@ -183,6 +183,49 @@ class GR_Google_Docs_API {
     }
 
     /**
+     * Convert stored option value to the array shape required by Google_Client::setAccessToken().
+     * Returns null if the value is empty, an OAuth error payload, or missing access_token
+     * (avoids "Invalid token format" from the Google API client).
+     *
+     * @param mixed $raw Value from the database (array, JSON string, or legacy bare token string).
+     * @return array|null Token array, or null if unusable.
+     */
+    private function normalize_stored_token($raw) {
+        if ($raw === null || $raw === false || $raw === '') {
+            return null;
+        }
+
+        if (is_string($raw)) {
+            $trim = trim($raw);
+            if ($trim === '') {
+                return null;
+            }
+            $first = $trim[0];
+            if ($first === '{' || $first === '[') {
+                $dec = json_decode($trim, true);
+                if (json_last_error() === JSON_ERROR_NONE && is_array($dec)) {
+                    $raw = $dec;
+                } else {
+                    return array('access_token' => $trim);
+                }
+            } else {
+                return array('access_token' => $trim);
+            }
+        }
+
+        if (!is_array($raw)) {
+            return null;
+        }
+        if (!empty($raw['error'])) {
+            return null;
+        }
+        if (empty($raw['access_token']) || !is_string($raw['access_token'])) {
+            return null;
+        }
+        return $raw;
+    }
+
+    /**
      * Get the access token from settings.
      *
      * @since  1.0
@@ -191,23 +234,29 @@ class GR_Google_Docs_API {
      * @return array|false
      */
     private function get_access_token() {
-        // Get token from options
-        $token = get_option('gr_google_docs_access_token');
-        
-        // Only log if debug mode is explicitly enabled
+        $raw = get_option('gr_google_docs_access_token');
         $debug_mode = defined('GR_GOOGLE_DOCS_DEBUG') && GR_GOOGLE_DOCS_DEBUG;
-        
-        if (!empty($token)) {
+
+        if ($raw === null || $raw === false || $raw === '') {
             if ($debug_mode) {
-                GR_Google_Docs::get_instance()->log_debug('GR_Google_Docs_API::get_access_token(): Retrieved token from options.');
+                GR_Google_Docs::get_instance()->log_debug('GR_Google_Docs_API::get_access_token(): No token found in options.');
             }
-            return $token;
+            return false;
         }
-        
+
+        $token = $this->normalize_stored_token($raw);
+        if ($token === null) {
+            delete_option('gr_google_docs_access_token');
+            GR_Google_Docs::get_instance()->log_error(
+                'GR_Google_Docs_API::get_access_token(): Removed invalid stored OAuth data (missing access_token, or error payload). Reconnect Google in Forms → Settings → Google Docs.'
+            );
+            return false;
+        }
+
         if ($debug_mode) {
-            GR_Google_Docs::get_instance()->log_debug('GR_Google_Docs_API::get_access_token(): No token found in options.');
+            GR_Google_Docs::get_instance()->log_debug('GR_Google_Docs_API::get_access_token(): Retrieved token from options.');
         }
-        return false;
+        return $token;
     }
 
     /**
@@ -219,18 +268,19 @@ class GR_Google_Docs_API {
      * @param array $token The access token to save.
      */
     private function save_access_token($token) {
-        // Save the token
-        $result = update_option('gr_google_docs_access_token', $token);
-        
-        if ($result) {
-            // Set the token in the client immediately after saving
-            $this->client->setAccessToken($token);
-            // Only log success in debug mode to reduce noise
-            if (defined('GR_GOOGLE_DOCS_DEBUG') && GR_GOOGLE_DOCS_DEBUG) {
-                GR_Google_Docs::get_instance()->log_debug('GR_Google_Docs_API::save_access_token(): Token saved and set in client successfully.');
+        if (!is_array($token) || !empty($token['error']) || empty($token['access_token']) || !is_string($token['access_token'])) {
+            if (is_array($token) && !empty($token['error'])) {
+                GR_Google_Docs::get_instance()->log_error(
+                    'GR_Google_Docs_API::save_access_token(): Not saving token; OAuth response error: ' . $token['error']
+                );
             }
-        } else {
-            GR_Google_Docs::get_instance()->log_error('GR_Google_Docs_API::save_access_token(): Failed to save token to options.');
+            return;
+        }
+
+        update_option('gr_google_docs_access_token', $token);
+        $this->client->setAccessToken($token);
+        if (defined('GR_GOOGLE_DOCS_DEBUG') && GR_GOOGLE_DOCS_DEBUG) {
+            GR_Google_Docs::get_instance()->log_debug('GR_Google_Docs_API::save_access_token(): Token saved and set in client successfully.');
         }
     }
 
@@ -275,9 +325,15 @@ class GR_Google_Docs_API {
             
             // Fetch the access token
             $token = $this->client->fetchAccessTokenWithAuthCode($code);
-            
-            if (empty($token)) {
-                GR_Google_Docs::get_instance()->log_error('GR_Google_Docs_API::handle_oauth_callback(): No token received from Google.');
+
+            if (empty($token) || !empty($token['error'])) {
+                if (is_array($token) && !empty($token['error'])) {
+                    GR_Google_Docs::get_instance()->log_error(
+                        'GR_Google_Docs_API::handle_oauth_callback(): ' . $token['error'] . (isset($token['error_description']) ? ' — ' . $token['error_description'] : '')
+                    );
+                } else {
+                    GR_Google_Docs::get_instance()->log_error('GR_Google_Docs_API::handle_oauth_callback(): No token received from Google.');
+                }
                 return false;
             }
             
@@ -335,6 +391,10 @@ class GR_Google_Docs_API {
             }
             try {
                 $token = $this->client->fetchAccessTokenWithRefreshToken($this->client->getRefreshToken());
+                if (empty($token['access_token']) || !empty($token['error'])) {
+                    GR_Google_Docs::get_instance()->log_error('GR_Google_Docs_API::has_valid_token(): Token refresh did not return a valid access token.');
+                    return false;
+                }
                 $this->save_access_token($token);
                 GR_Google_Docs::get_instance()->log_debug('GR_Google_Docs_API::has_valid_token(): Token refreshed successfully.');
                 return true;
@@ -364,6 +424,9 @@ class GR_Google_Docs_API {
             if ($this->client->getRefreshToken()) {
                 try {
                     $token = $this->client->fetchAccessTokenWithRefreshToken($this->client->getRefreshToken());
+                    if (empty($token['access_token']) || !empty($token['error'])) {
+                        return false;
+                    }
                     $this->save_access_token($token);
                     return true;
                 } catch (Exception $e) {
