@@ -2,7 +2,7 @@
 /**
  * Google API Handler Class
  *
- * @package GRGoogleDocs
+ * @package GFGoogleDocs
  */
 
 if (!defined('ABSPATH')) {
@@ -10,9 +10,9 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * Class GR_Google_Docs_API
+ * Class GF_Google_Docs_API
  */
-class GR_Google_Docs_API {
+class GF_Google_Docs_API {
     /**
      * Google Client instance.
      *
@@ -43,7 +43,7 @@ class GR_Google_Docs_API {
 
     private $cache_enabled = true;
     private $cache_expiration = 3600; // 1 hour
-    private $cache_prefix = 'gr_google_docs_cache_';
+    private $cache_prefix = 'gf_googledocs_cache_';
 
     /**
      * Constructor.
@@ -58,7 +58,12 @@ class GR_Google_Docs_API {
      */
     private function load_rate_limit_settings() {
         // Get rate limit from plugin settings
-        $plugin_settings = get_option('gravityformsaddon_gr-google-docs_settings', array());
+        if (!class_exists('GFGoogleDocs')) {
+            $this->rate_limit = 100;
+            $this->rate_window = 60;
+            return;
+        }
+        $plugin_settings = GFGoogleDocs::get_instance()->get_plugin_settings();
         $rate_limit = rgar($plugin_settings, 'rate_limit', 100);
         
         // Validate and sanitize rate limit
@@ -106,7 +111,7 @@ class GR_Google_Docs_API {
             $client_secret = $this->get_client_secret();
             
             if (empty($client_id) || empty($client_secret)) {
-                GR_Google_Docs::get_instance()->log_error('GR_Google_Docs_API::init_client(): Client credentials are missing.');
+                GFGoogleDocs::get_instance()->log_error('GF_Google_Docs_API::init_client(): Client credentials are missing.');
                 return;
             }
             
@@ -121,7 +126,7 @@ class GR_Google_Docs_API {
             $this->client->setPrompt('consent');
             
             // Set state parameter for CSRF protection
-            $this->client->setState(wp_create_nonce('gr_google_docs_oauth_state'));
+            $this->client->setState(wp_create_nonce('gf_googledocs_oauth_state'));
 
             // If we have a valid token, set it
             if ($this->has_valid_token()) {
@@ -132,11 +137,11 @@ class GR_Google_Docs_API {
             $this->drive_service = new Google_Service_Drive($this->client);
             
             // Only log initialization in debug mode
-            if (defined('GR_GOOGLE_DOCS_DEBUG') && GR_GOOGLE_DOCS_DEBUG) {
-                GR_Google_Docs::get_instance()->log_debug('GR_Google_Docs_API::init_client(): Client initialized successfully.');
+            if (defined('GF_GOOGLE_DOCS_DEBUG') && GF_GOOGLE_DOCS_DEBUG) {
+                GFGoogleDocs::get_instance()->log_debug('GF_Google_Docs_API::init_client(): Client initialized successfully.');
             }
         } catch (Exception $e) {
-            GR_Google_Docs::get_instance()->log_error('GR_Google_Docs_API::init_client(): Failed to initialize client. Error: ' . $e->getMessage());
+            GFGoogleDocs::get_instance()->log_error('GF_Google_Docs_API::init_client(): Failed to initialize client. Error: ' . $e->getMessage());
         }
     }
 
@@ -149,7 +154,7 @@ class GR_Google_Docs_API {
      * @return string
      */
     private function get_client_id() {
-        return GR_Google_Docs::get_instance()->get_plugin_setting('client_id');
+        return GFGoogleDocs::get_instance()->get_plugin_setting('client_id');
     }
 
     /**
@@ -161,7 +166,7 @@ class GR_Google_Docs_API {
      * @return string
      */
     private function get_client_secret() {
-        return GR_Google_Docs::get_instance()->get_plugin_setting('client_secret');
+        return GFGoogleDocs::get_instance()->get_plugin_setting('client_secret');
     }
 
     /**
@@ -176,10 +181,53 @@ class GR_Google_Docs_API {
         return add_query_arg(
             array(
                 'page' => 'gf_settings',
-                'subview' => 'google_docs'
+                'subview' => 'gravityformsgoogledocs'
             ),
             admin_url('admin.php')
         );
+    }
+
+    /**
+     * Convert stored option value to the array shape required by Google_Client::setAccessToken().
+     * Returns null if the value is empty, an OAuth error payload, or missing access_token
+     * (avoids "Invalid token format" from the Google API client).
+     *
+     * @param mixed $raw Value from the database (array, JSON string, or legacy bare token string).
+     * @return array|null Token array, or null if unusable.
+     */
+    private function normalize_stored_token($raw) {
+        if ($raw === null || $raw === false || $raw === '') {
+            return null;
+        }
+
+        if (is_string($raw)) {
+            $trim = trim($raw);
+            if ($trim === '') {
+                return null;
+            }
+            $first = $trim[0];
+            if ($first === '{' || $first === '[') {
+                $dec = json_decode($trim, true);
+                if (json_last_error() === JSON_ERROR_NONE && is_array($dec)) {
+                    $raw = $dec;
+                } else {
+                    return array('access_token' => $trim);
+                }
+            } else {
+                return array('access_token' => $trim);
+            }
+        }
+
+        if (!is_array($raw)) {
+            return null;
+        }
+        if (!empty($raw['error'])) {
+            return null;
+        }
+        if (empty($raw['access_token']) || !is_string($raw['access_token'])) {
+            return null;
+        }
+        return $raw;
     }
 
     /**
@@ -191,23 +239,29 @@ class GR_Google_Docs_API {
      * @return array|false
      */
     private function get_access_token() {
-        // Get token from options
-        $token = get_option('gr_google_docs_access_token');
-        
-        // Only log if debug mode is explicitly enabled
-        $debug_mode = defined('GR_GOOGLE_DOCS_DEBUG') && GR_GOOGLE_DOCS_DEBUG;
-        
-        if (!empty($token)) {
+        $raw = get_option('gf_googledocs_access_token');
+        $debug_mode = defined('GF_GOOGLE_DOCS_DEBUG') && GF_GOOGLE_DOCS_DEBUG;
+
+        if ($raw === null || $raw === false || $raw === '') {
             if ($debug_mode) {
-                GR_Google_Docs::get_instance()->log_debug('GR_Google_Docs_API::get_access_token(): Retrieved token from options.');
+                GFGoogleDocs::get_instance()->log_debug('GF_Google_Docs_API::get_access_token(): No token found in options.');
             }
-            return $token;
+            return false;
         }
-        
+
+        $token = $this->normalize_stored_token($raw);
+        if ($token === null) {
+            delete_option('gf_googledocs_access_token');
+            GFGoogleDocs::get_instance()->log_error(
+                'GF_Google_Docs_API::get_access_token(): Removed invalid stored OAuth data (missing access_token, or error payload). Reconnect Google in Forms → Settings → Google Docs.'
+            );
+            return false;
+        }
+
         if ($debug_mode) {
-            GR_Google_Docs::get_instance()->log_debug('GR_Google_Docs_API::get_access_token(): No token found in options.');
+            GFGoogleDocs::get_instance()->log_debug('GF_Google_Docs_API::get_access_token(): Retrieved token from options.');
         }
-        return false;
+        return $token;
     }
 
     /**
@@ -219,18 +273,19 @@ class GR_Google_Docs_API {
      * @param array $token The access token to save.
      */
     private function save_access_token($token) {
-        // Save the token
-        $result = update_option('gr_google_docs_access_token', $token);
-        
-        if ($result) {
-            // Set the token in the client immediately after saving
-            $this->client->setAccessToken($token);
-            // Only log success in debug mode to reduce noise
-            if (defined('GR_GOOGLE_DOCS_DEBUG') && GR_GOOGLE_DOCS_DEBUG) {
-                GR_Google_Docs::get_instance()->log_debug('GR_Google_Docs_API::save_access_token(): Token saved and set in client successfully.');
+        if (!is_array($token) || !empty($token['error']) || empty($token['access_token']) || !is_string($token['access_token'])) {
+            if (is_array($token) && !empty($token['error'])) {
+                GFGoogleDocs::get_instance()->log_error(
+                    'GF_Google_Docs_API::save_access_token(): Not saving token; OAuth response error: ' . $token['error']
+                );
             }
-        } else {
-            GR_Google_Docs::get_instance()->log_error('GR_Google_Docs_API::save_access_token(): Failed to save token to options.');
+            return;
+        }
+
+        update_option('gf_googledocs_access_token', $token);
+        $this->client->setAccessToken($token);
+        if (defined('GF_GOOGLE_DOCS_DEBUG') && GF_GOOGLE_DOCS_DEBUG) {
+            GFGoogleDocs::get_instance()->log_debug('GF_Google_Docs_API::save_access_token(): Token saved and set in client successfully.');
         }
     }
 
@@ -246,15 +301,15 @@ class GR_Google_Docs_API {
         try {
             // If we don't have client credentials, redirect to Google Cloud Console
             if (empty($this->get_client_id()) || empty($this->get_client_secret())) {
-                GR_Google_Docs::get_instance()->log_debug('GR_Google_Docs_API::get_auth_url(): No client credentials found, redirecting to Google Cloud Console.');
+                GFGoogleDocs::get_instance()->log_debug('GF_Google_Docs_API::get_auth_url(): No client credentials found, redirecting to Google Cloud Console.');
                 return 'https://console.cloud.google.com/apis/credentials';
             }
             
             $auth_url = $this->client->createAuthUrl();
-            GR_Google_Docs::get_instance()->log_debug('GR_Google_Docs_API::get_auth_url(): Generated auth URL successfully.');
+            GFGoogleDocs::get_instance()->log_debug('GF_Google_Docs_API::get_auth_url(): Generated auth URL successfully.');
             return $auth_url;
         } catch (Exception $e) {
-            GR_Google_Docs::get_instance()->log_error('GR_Google_Docs_API::get_auth_url(): Failed to generate auth URL. Error: ' . $e->getMessage());
+            GFGoogleDocs::get_instance()->log_error('GF_Google_Docs_API::get_auth_url(): Failed to generate auth URL. Error: ' . $e->getMessage());
             return '';
         }
     }
@@ -271,31 +326,37 @@ class GR_Google_Docs_API {
      */
     public function handle_oauth_callback($code) {
         try {
-            GR_Google_Docs::get_instance()->log_debug('GR_Google_Docs_API::handle_oauth_callback(): Starting OAuth callback with code.');
+            GFGoogleDocs::get_instance()->log_debug('GF_Google_Docs_API::handle_oauth_callback(): Starting OAuth callback with code.');
             
             // Fetch the access token
             $token = $this->client->fetchAccessTokenWithAuthCode($code);
-            
-            if (empty($token)) {
-                GR_Google_Docs::get_instance()->log_error('GR_Google_Docs_API::handle_oauth_callback(): No token received from Google.');
+
+            if (empty($token) || !empty($token['error'])) {
+                if (is_array($token) && !empty($token['error'])) {
+                    GFGoogleDocs::get_instance()->log_error(
+                        'GF_Google_Docs_API::handle_oauth_callback(): ' . $token['error'] . (isset($token['error_description']) ? ' — ' . $token['error_description'] : '')
+                    );
+                } else {
+                    GFGoogleDocs::get_instance()->log_error('GF_Google_Docs_API::handle_oauth_callback(): No token received from Google.');
+                }
                 return false;
             }
             
-            GR_Google_Docs::get_instance()->log_debug('GR_Google_Docs_API::handle_oauth_callback(): Token received from Google.');
+            GFGoogleDocs::get_instance()->log_debug('GF_Google_Docs_API::handle_oauth_callback(): Token received from Google.');
             
             // Save the token
             $this->save_access_token($token);
             
             // Verify the token is valid
             if (!$this->has_valid_token()) {
-                GR_Google_Docs::get_instance()->log_error('GR_Google_Docs_API::handle_oauth_callback(): Token validation failed after saving.');
+                GFGoogleDocs::get_instance()->log_error('GF_Google_Docs_API::handle_oauth_callback(): Token validation failed after saving.');
                 return false;
             }
             
-            GR_Google_Docs::get_instance()->log_debug('GR_Google_Docs_API::handle_oauth_callback(): Successfully authenticated with Google.');
+            GFGoogleDocs::get_instance()->log_debug('GF_Google_Docs_API::handle_oauth_callback(): Successfully authenticated with Google.');
             return true;
         } catch (Exception $e) {
-            GR_Google_Docs::get_instance()->log_error('GR_Google_Docs_API::handle_oauth_callback(): Error during authentication. Error: ' . $e->getMessage());
+            GFGoogleDocs::get_instance()->log_error('GF_Google_Docs_API::handle_oauth_callback(): Error during authentication. Error: ' . $e->getMessage());
             return false;
         }
     }
@@ -310,16 +371,16 @@ class GR_Google_Docs_API {
      */
     private function has_valid_token() {
         // Only log detailed steps if explicitly enabled for debugging
-        $debug_mode = defined('GR_GOOGLE_DOCS_DEBUG') && GR_GOOGLE_DOCS_DEBUG;
+        $debug_mode = defined('GF_GOOGLE_DOCS_DEBUG') && GF_GOOGLE_DOCS_DEBUG;
         
         if ($debug_mode) {
-            GR_Google_Docs::get_instance()->log_debug('GR_Google_Docs_API::has_valid_token(): Checking token validity.');
+            GFGoogleDocs::get_instance()->log_debug('GF_Google_Docs_API::has_valid_token(): Checking token validity.');
         }
         
         $token = $this->get_access_token();
         if (empty($token)) {
             if ($debug_mode) {
-                GR_Google_Docs::get_instance()->log_debug('GR_Google_Docs_API::has_valid_token(): No token found.');
+                GFGoogleDocs::get_instance()->log_debug('GF_Google_Docs_API::has_valid_token(): No token found.');
             }
             return false;
         }
@@ -331,15 +392,19 @@ class GR_Google_Docs_API {
         
         if ($is_expired && $this->client->getRefreshToken()) {
             if ($debug_mode) {
-                GR_Google_Docs::get_instance()->log_debug('GR_Google_Docs_API::has_valid_token(): Token expired, attempting refresh.');
+                GFGoogleDocs::get_instance()->log_debug('GF_Google_Docs_API::has_valid_token(): Token expired, attempting refresh.');
             }
             try {
                 $token = $this->client->fetchAccessTokenWithRefreshToken($this->client->getRefreshToken());
+                if (empty($token['access_token']) || !empty($token['error'])) {
+                    GFGoogleDocs::get_instance()->log_error('GF_Google_Docs_API::has_valid_token(): Token refresh did not return a valid access token.');
+                    return false;
+                }
                 $this->save_access_token($token);
-                GR_Google_Docs::get_instance()->log_debug('GR_Google_Docs_API::has_valid_token(): Token refreshed successfully.');
+                GFGoogleDocs::get_instance()->log_debug('GF_Google_Docs_API::has_valid_token(): Token refreshed successfully.');
                 return true;
             } catch (Exception $e) {
-                GR_Google_Docs::get_instance()->log_error('GR_Google_Docs_API::has_valid_token(): Failed to refresh token. Error: ' . $e->getMessage());
+                GFGoogleDocs::get_instance()->log_error('GF_Google_Docs_API::has_valid_token(): Failed to refresh token. Error: ' . $e->getMessage());
                 return false;
             }
         }
@@ -364,10 +429,13 @@ class GR_Google_Docs_API {
             if ($this->client->getRefreshToken()) {
                 try {
                     $token = $this->client->fetchAccessTokenWithRefreshToken($this->client->getRefreshToken());
+                    if (empty($token['access_token']) || !empty($token['error'])) {
+                        return false;
+                    }
                     $this->save_access_token($token);
                     return true;
                 } catch (Exception $e) {
-                    GR_Google_Docs::get_instance()->log_error('GR_Google_Docs_API::ensure_valid_token(): ' . $e->getMessage());
+                    GFGoogleDocs::get_instance()->log_error('GF_Google_Docs_API::ensure_valid_token(): ' . $e->getMessage());
                     return false;
                 }
             }
@@ -396,9 +464,9 @@ class GR_Google_Docs_API {
             return $auth_status;
         }
         
-        $debug_mode = defined('GR_GOOGLE_DOCS_DEBUG') && GR_GOOGLE_DOCS_DEBUG;
+        $debug_mode = defined('GF_GOOGLE_DOCS_DEBUG') && GF_GOOGLE_DOCS_DEBUG;
         if ($debug_mode) {
-            GR_Google_Docs::get_instance()->log_debug('GR_Google_Docs_API::is_authenticated(): Checking authentication status.');
+            GFGoogleDocs::get_instance()->log_debug('GF_Google_Docs_API::is_authenticated(): Checking authentication status.');
         }
         
         $is_valid = $this->has_valid_token();
@@ -406,7 +474,7 @@ class GR_Google_Docs_API {
         $last_check = $current_time;
         
         if ($debug_mode) {
-            GR_Google_Docs::get_instance()->log_debug('GR_Google_Docs_API::is_authenticated(): Authentication status: ' . ($is_valid ? 'authenticated' : 'not authenticated'));
+            GFGoogleDocs::get_instance()->log_debug('GF_Google_Docs_API::is_authenticated(): Authentication status: ' . ($is_valid ? 'authenticated' : 'not authenticated'));
         }
         
         return $is_valid;
@@ -423,10 +491,10 @@ class GR_Google_Docs_API {
     public function disconnect() {
         try {
             // Delete the access token
-            delete_option('gr_google_docs_access_token');
+            delete_option('gf_googledocs_access_token');
             return true;
         } catch (Exception $e) {
-            GR_Google_Docs::get_instance()->log_error('GR_Google_Docs_API::disconnect(): ' . $e->getMessage());
+            GFGoogleDocs::get_instance()->log_error('GF_Google_Docs_API::disconnect(): ' . $e->getMessage());
             return false;
         }
     }
@@ -445,19 +513,19 @@ class GR_Google_Docs_API {
      */
     public function create_document_from_template($document_title, $document_body, $template_id = null) {
         try {
-            GR_Google_Docs::get_instance()->log_debug('GR_Google_Docs_API::create_document_from_template(): Starting document creation.');
-            GR_Google_Docs::get_instance()->log_debug('GR_Google_Docs_API::create_document_from_template(): Document Title: ' . $document_title);
-            GR_Google_Docs::get_instance()->log_debug('GR_Google_Docs_API::create_document_from_template(): Template ID: ' . ($template_id ?: 'none (blank document)'));
-            GR_Google_Docs::get_instance()->log_debug('GR_Google_Docs_API::create_document_from_template(): Document Body: ' . $document_body);
+            GFGoogleDocs::get_instance()->log_debug('GF_Google_Docs_API::create_document_from_template(): Starting document creation.');
+            GFGoogleDocs::get_instance()->log_debug('GF_Google_Docs_API::create_document_from_template(): Document Title: ' . $document_title);
+            GFGoogleDocs::get_instance()->log_debug('GF_Google_Docs_API::create_document_from_template(): Template ID: ' . ($template_id ?: 'none (blank document)'));
+            GFGoogleDocs::get_instance()->log_debug('GF_Google_Docs_API::create_document_from_template(): Document Body: ' . $document_body);
 
             // Check authentication
             if (!$this->is_authenticated()) {
-                GR_Google_Docs::get_instance()->log_error('GR_Google_Docs_API::create_document_from_template(): Not authenticated with Google.');
+                GFGoogleDocs::get_instance()->log_error('GF_Google_Docs_API::create_document_from_template(): Not authenticated with Google.');
                 throw new Exception('Not authenticated with Google.');
             }
 
             // Create a new document
-            GR_Google_Docs::get_instance()->log_debug('GR_Google_Docs_API::create_document_from_template(): Creating new document.');
+            GFGoogleDocs::get_instance()->log_debug('GF_Google_Docs_API::create_document_from_template(): Creating new document.');
             $new_file = new Google_Service_Drive_DriveFile(array(
                 'name' => $document_title,
                 'mimeType' => 'application/vnd.google-apps.document'
@@ -465,43 +533,43 @@ class GR_Google_Docs_API {
 
             try {
                 $new_file = $this->drive_service->files->create($new_file);
-                GR_Google_Docs::get_instance()->log_debug('GR_Google_Docs_API::create_document_from_template(): Successfully created new document. ID: ' . $new_file->getId());
+                GFGoogleDocs::get_instance()->log_debug('GF_Google_Docs_API::create_document_from_template(): Successfully created new document. ID: ' . $new_file->getId());
             } catch (Exception $e) {
-                GR_Google_Docs::get_instance()->log_error('GR_Google_Docs_API::create_document_from_template(): Failed to create document. Error: ' . $e->getMessage());
+                GFGoogleDocs::get_instance()->log_error('GF_Google_Docs_API::create_document_from_template(): Failed to create document. Error: ' . $e->getMessage());
                 throw new Exception('Failed to create document. Please check your Google Drive permissions.');
             }
 
             // If using a template, copy its content
             if ($template_id) {
-                GR_Google_Docs::get_instance()->log_debug('GR_Google_Docs_API::create_document_from_template(): Copying template content.');
+                GFGoogleDocs::get_instance()->log_debug('GF_Google_Docs_API::create_document_from_template(): Copying template content.');
                 try {
                     $template = $this->drive_service->files->get($template_id);
-                    GR_Google_Docs::get_instance()->log_debug('GR_Google_Docs_API::create_document_from_template(): Successfully retrieved template document: ' . $template->getName());
+                    GFGoogleDocs::get_instance()->log_debug('GF_Google_Docs_API::create_document_from_template(): Successfully retrieved template document: ' . $template->getName());
                     
                     // Copy the template content to the new document
                     $this->copy_template_content($template_id, $new_file->getId());
-                    GR_Google_Docs::get_instance()->log_debug('GR_Google_Docs_API::create_document_from_template(): Successfully copied template content.');
+                    GFGoogleDocs::get_instance()->log_debug('GF_Google_Docs_API::create_document_from_template(): Successfully copied template content.');
                 } catch (Exception $e) {
-                    GR_Google_Docs::get_instance()->log_error('GR_Google_Docs_API::create_document_from_template(): Failed to copy template content. Error: ' . $e->getMessage());
+                    GFGoogleDocs::get_instance()->log_error('GF_Google_Docs_API::create_document_from_template(): Failed to copy template content. Error: ' . $e->getMessage());
                     // Don't throw here, as we still have a new document
                 }
             }
 
             // Add the document body if provided
             if (!empty($document_body)) {
-                GR_Google_Docs::get_instance()->log_debug('GR_Google_Docs_API::create_document_from_template(): Adding document body.');
+                GFGoogleDocs::get_instance()->log_debug('GF_Google_Docs_API::create_document_from_template(): Adding document body.');
                 try {
                     $this->add_document_body($new_file->getId(), $document_body);
-                    GR_Google_Docs::get_instance()->log_debug('GR_Google_Docs_API::create_document_from_template(): Successfully added document body.');
+                    GFGoogleDocs::get_instance()->log_debug('GF_Google_Docs_API::create_document_from_template(): Successfully added document body.');
                 } catch (Exception $e) {
-                    GR_Google_Docs::get_instance()->log_error('GR_Google_Docs_API::create_document_from_template(): Failed to add document body. Error: ' . $e->getMessage());
+                    GFGoogleDocs::get_instance()->log_error('GF_Google_Docs_API::create_document_from_template(): Failed to add document body. Error: ' . $e->getMessage());
                     // Don't throw here, as the document was created successfully
                 }
             }
 
             return $new_file->getId();
         } catch (Exception $e) {
-            GR_Google_Docs::get_instance()->log_error('GR_Google_Docs_API::create_document_from_template(): Error creating document. Error: ' . $e->getMessage());
+            GFGoogleDocs::get_instance()->log_error('GF_Google_Docs_API::create_document_from_template(): Error creating document. Error: ' . $e->getMessage());
             throw $e;
         }
     }
@@ -553,7 +621,7 @@ class GR_Google_Docs_API {
                 $this->docs_service->documents->batchUpdate($new_doc_id, $batch_update);
             }
         } catch (Exception $e) {
-            GR_Google_Docs::get_instance()->log_error('GR_Google_Docs_API::copy_template_content(): Failed to copy template content. Error: ' . $e->getMessage());
+            GFGoogleDocs::get_instance()->log_error('GF_Google_Docs_API::copy_template_content(): Failed to copy template content. Error: ' . $e->getMessage());
             throw $e;
         }
     }
@@ -581,20 +649,20 @@ class GR_Google_Docs_API {
     public function create_document($document_title, $document_body, $folder_id = '') {
         try {
             $this->check_rate_limit();
-            GR_Google_Docs::get_instance()->log_debug('GR_Google_Docs_API::create_document(): Starting document creation.');
-            GR_Google_Docs::get_instance()->log_debug('GR_Google_Docs_API::create_document(): Document Title: ' . $document_title);
+            GFGoogleDocs::get_instance()->log_debug('GF_Google_Docs_API::create_document(): Starting document creation.');
+            GFGoogleDocs::get_instance()->log_debug('GF_Google_Docs_API::create_document(): Document Title: ' . $document_title);
             if (!empty($folder_id)) {
-                GR_Google_Docs::get_instance()->log_debug('GR_Google_Docs_API::create_document(): Target Folder ID: ' . $folder_id);
+                GFGoogleDocs::get_instance()->log_debug('GF_Google_Docs_API::create_document(): Target Folder ID: ' . $folder_id);
             }
 
             // Check authentication
             if (!$this->is_authenticated()) {
-                GR_Google_Docs::get_instance()->log_error('GR_Google_Docs_API::create_document(): Not authenticated with Google.');
+                GFGoogleDocs::get_instance()->log_error('GF_Google_Docs_API::create_document(): Not authenticated with Google.');
                 throw new Exception('Not authenticated with Google.');
             }
 
             // Create a new document
-            GR_Google_Docs::get_instance()->log_debug('GR_Google_Docs_API::create_document(): Creating new document.');
+            GFGoogleDocs::get_instance()->log_debug('GF_Google_Docs_API::create_document(): Creating new document.');
             $file_metadata = array(
                 'name' => $document_title,
                 'mimeType' => 'application/vnd.google-apps.document'
@@ -609,27 +677,27 @@ class GR_Google_Docs_API {
 
             try {
                 $new_file = $this->drive_service->files->create($new_file);
-                GR_Google_Docs::get_instance()->log_debug('GR_Google_Docs_API::create_document(): Successfully created new document. ID: ' . $new_file->getId());
+                GFGoogleDocs::get_instance()->log_debug('GF_Google_Docs_API::create_document(): Successfully created new document. ID: ' . $new_file->getId());
             } catch (Exception $e) {
-                GR_Google_Docs::get_instance()->log_error('GR_Google_Docs_API::create_document(): Failed to create document. Error: ' . $e->getMessage());
+                GFGoogleDocs::get_instance()->log_error('GF_Google_Docs_API::create_document(): Failed to create document. Error: ' . $e->getMessage());
                 throw new Exception('Failed to create document. Please check your Google Drive permissions.');
             }
 
             // Add the document body if provided
             if (!empty($document_body)) {
-                GR_Google_Docs::get_instance()->log_debug('GR_Google_Docs_API::create_document(): Adding document body.');
+                GFGoogleDocs::get_instance()->log_debug('GF_Google_Docs_API::create_document(): Adding document body.');
                 try {
                     $this->add_document_body($new_file->getId(), $document_body);
-                    GR_Google_Docs::get_instance()->log_debug('GR_Google_Docs_API::create_document(): Successfully added document body.');
+                    GFGoogleDocs::get_instance()->log_debug('GF_Google_Docs_API::create_document(): Successfully added document body.');
                 } catch (Exception $e) {
-                    GR_Google_Docs::get_instance()->log_error('GR_Google_Docs_API::create_document(): Failed to add document body. Error: ' . $e->getMessage());
+                    GFGoogleDocs::get_instance()->log_error('GF_Google_Docs_API::create_document(): Failed to add document body. Error: ' . $e->getMessage());
                     // Don't throw here, as the document was created successfully
                 }
             }
 
             return $new_file->getId();
         } catch (Exception $e) {
-            GR_Google_Docs::get_instance()->log_error('GR_Google_Docs_API::create_document(): Error creating document. Error: ' . $e->getMessage());
+            GFGoogleDocs::get_instance()->log_error('GF_Google_Docs_API::create_document(): Error creating document. Error: ' . $e->getMessage());
             throw $e;
         }
     }
@@ -702,13 +770,13 @@ class GR_Google_Docs_API {
 
             $service->documents->batchUpdate($document_id, $batch_request);
 
-            if (defined('GR_GOOGLE_DOCS_DEBUG') && GR_GOOGLE_DOCS_DEBUG) {
-                GR_Google_Docs::get_instance()->log_debug('GR_Google_Docs_API::add_document_body(): Successfully added content at index ' . $insertion_index);
+            if (defined('GF_GOOGLE_DOCS_DEBUG') && GF_GOOGLE_DOCS_DEBUG) {
+                GFGoogleDocs::get_instance()->log_debug('GF_Google_Docs_API::add_document_body(): Successfully added content at index ' . $insertion_index);
             }
 
             return true;
         } catch (Exception $e) {
-            GR_Google_Docs::get_instance()->log_error('GR_Google_Docs_API::add_document_body(): Error adding document body. Error: ' . $e->getMessage());
+            GFGoogleDocs::get_instance()->log_error('GF_Google_Docs_API::add_document_body(): Error adding document body. Error: ' . $e->getMessage());
             throw $e;
         }
     }
@@ -726,7 +794,7 @@ class GR_Google_Docs_API {
      */
     public function append_to_document($document_id, $content) {
         try {
-            GR_Google_Docs::get_instance()->log_debug('GR_Google_Docs_API::append_to_document(): Starting to append content to document ' . $document_id);
+            GFGoogleDocs::get_instance()->log_debug('GF_Google_Docs_API::append_to_document(): Starting to append content to document ' . $document_id);
 
             // Get the service
             $service = $this->get_service();
@@ -737,7 +805,7 @@ class GR_Google_Docs_API {
             // Get the current document content
             $document = $service->documents->get($document_id);
             if (!$document) {
-                return new WP_Error('document_not_found', esc_html__('Document not found.', 'gr-google-docs'));
+                return new WP_Error('document_not_found', esc_html__('Document not found.', 'gravityformsgoogledocs'));
             }
 
             // Create the content to append
@@ -757,14 +825,14 @@ class GR_Google_Docs_API {
 
             $response = $service->documents->batchUpdate($document_id, $request);
             if (!$response) {
-                return new WP_Error('append_failed', esc_html__('Failed to append content to document.', 'gr-google-docs'));
+                return new WP_Error('append_failed', esc_html__('Failed to append content to document.', 'gravityformsgoogledocs'));
             }
 
-            GR_Google_Docs::get_instance()->log_debug('GR_Google_Docs_API::append_to_document(): Successfully appended content to document ' . $document_id);
+            GFGoogleDocs::get_instance()->log_debug('GF_Google_Docs_API::append_to_document(): Successfully appended content to document ' . $document_id);
             return $document_id;
 
         } catch (Exception $e) {
-            GR_Google_Docs::get_instance()->log_error('GR_Google_Docs_API::append_to_document(): Error appending content to document. Error: ' . $e->getMessage());
+            GFGoogleDocs::get_instance()->log_error('GF_Google_Docs_API::append_to_document(): Error appending content to document. Error: ' . $e->getMessage());
             return new WP_Error('append_error', $e->getMessage());
         }
     }
@@ -818,8 +886,8 @@ class GR_Google_Docs_API {
         $error_code = $e->getCode();
         
         // Log the full error details
-        GR_Google_Docs::get_instance()->log_error(sprintf(
-            'GR_Google_Docs_API::%s(): API Error - Code: %s, Message: %s',
+        GFGoogleDocs::get_instance()->log_error(sprintf(
+            'GF_Google_Docs_API::%s(): API Error - Code: %s, Message: %s',
             $context,
             $error_code,
             $error_message
@@ -857,7 +925,7 @@ class GR_Google_Docs_API {
         }
         
         // Clear the access token
-        delete_option('gr_google_docs_access_token');
+        delete_option('gf_googledocs_access_token');
         
         // Log the user out
         $this->disconnect();
@@ -866,7 +934,7 @@ class GR_Google_Docs_API {
         add_action('admin_notices', function() {
             if (current_user_can('gform_full_access')) {
                 echo '<div class="notice notice-error"><p>' . 
-                    esc_html__('Your Google authentication has expired. Please reconnect to Google.', 'gr-google-docs') . 
+                    esc_html__('Your Google authentication has expired. Please reconnect to Google.', 'gravityformsgoogledocs') . 
                     '</p></div>';
             }
         });
@@ -916,7 +984,7 @@ class GR_Google_Docs_API {
                 'verified_email' => isset($user_info['verified_email']) ? $user_info['verified_email'] : false
             );
         } catch (Exception $e) {
-            GR_Google_Docs::get_instance()->log_error('GR_Google_Docs_API::get_account_info(): Error getting account info. Error: ' . $e->getMessage());
+            GFGoogleDocs::get_instance()->log_error('GF_Google_Docs_API::get_account_info(): Error getting account info. Error: ' . $e->getMessage());
             return new WP_Error('account_info_error', $e->getMessage());
         }
     }
@@ -961,8 +1029,8 @@ class GR_Google_Docs_API {
         $cached_data = get_transient($cache_key);
 
         if ($cached_data !== false) {
-            if (defined('GR_GOOGLE_DOCS_DEBUG') && GR_GOOGLE_DOCS_DEBUG) {
-                GR_Google_Docs::get_instance()->log_debug(__METHOD__ . '(): Cache hit for key: ' . $key);
+            if (defined('GF_GOOGLE_DOCS_DEBUG') && GF_GOOGLE_DOCS_DEBUG) {
+                GFGoogleDocs::get_instance()->log_debug(__METHOD__ . '(): Cache hit for key: ' . $key);
             }
             return $cached_data;
         }
@@ -994,8 +1062,8 @@ class GR_Google_Docs_API {
         $cache_key = $this->cache_prefix . md5($key);
         $result = set_transient($cache_key, $data, $expiration);
 
-        if ($result && defined('GR_GOOGLE_DOCS_DEBUG') && GR_GOOGLE_DOCS_DEBUG) {
-            GR_Google_Docs::get_instance()->log_debug(__METHOD__ . '(): Cached data for key: ' . $key . ' (expires in ' . $expiration . 's)');
+        if ($result && defined('GF_GOOGLE_DOCS_DEBUG') && GF_GOOGLE_DOCS_DEBUG) {
+            GFGoogleDocs::get_instance()->log_debug(__METHOD__ . '(): Cached data for key: ' . $key . ' (expires in ' . $expiration . 's)');
         }
 
         return $result;
@@ -1036,8 +1104,8 @@ class GR_Google_Docs_API {
             )
         );
 
-        if (defined('GR_GOOGLE_DOCS_DEBUG') && GR_GOOGLE_DOCS_DEBUG) {
-            GR_Google_Docs::get_instance()->log_debug(__METHOD__ . '(): Cleared all Google Docs API cache');
+        if (defined('GF_GOOGLE_DOCS_DEBUG') && GF_GOOGLE_DOCS_DEBUG) {
+            GFGoogleDocs::get_instance()->log_debug(__METHOD__ . '(): Cleared all Google Docs API cache');
         }
     }
 
