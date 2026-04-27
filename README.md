@@ -1,82 +1,84 @@
-# Google Docs Add-On for Gravity Forms
+# Gravity Forms Google Docs Add-On
 
 This WordPress plugin integrates Gravity Forms with Google Docs, allowing you to automatically create Google Docs from form submissions using customizable content templates.
 
 ## Features
 
 - Create Google Docs automatically from form submissions
+- Async feed processing so document creation does not block notifications or other feeds
 - Use Gravity Forms merge tags to insert form data into documents
 - Specify custom document titles and content templates
 - Optional Google Drive folder organization
 - OAuth2 authentication with Google
 - Conditional logic for when documents are created
 - Automatic document creation on form submission
-- Store document IDs and URLs with form entry notes
-- Comprehensive logging and error handling
+- Document ID and URL stored on the entry (entry meta); status and errors recorded on the entry notes
+- Optional debug logging via the `GF_GOOGLE_DOCS_DEBUG` constant
+- One-time migration of settings, tokens, feeds, and entry meta from legacy add-on slugs (`google_docs`, `gr-google-docs`) to `gravityformsgoogledocs`
 
 ## Requirements
 
 - WordPress 5.0 or higher
 - Gravity Forms 2.7 or higher
 - PHP 7.4 or higher
-- Google Cloud Project with Google Docs API and Google Drive API enabled
-- Google OAuth 2.0 credentials
+- [Composer](https://getcomposer.org/) dependencies installed in the plugin directory (`vendor/` must exist; see Installation)
+- Google Cloud project with Google Docs API and Google Drive API enabled
+- Google OAuth 2.0 credentials (Web application)
 
 ## Installation
 
-1. Download the plugin files
-2. Upload the plugin folder to the `/wp-content/plugins/` directory
-3. Activate the plugin through the 'Plugins' menu in WordPress
-4. Go to Forms > Settings > Google Docs to configure the plugin
+1. Copy the plugin into your site so the main file path is **`wp-content/plugins/gravityformsgoogledocs/googledocs.php`** (folder name must match what Gravity Forms expects for this add-on).
+2. From the plugin directory, install PHP dependencies:
+   ```bash
+   composer install --no-dev
+   ```
+3. Activate the plugin through the **Plugins** screen in WordPress.
+4. Go to **Forms → Settings → Google Docs** to configure OAuth and global settings.
+
+If `vendor/autoload.php` is missing, activation will fail with an error asking you to run `composer install`.
 
 ## Setup
 
-1. Set Up Google Cloud Project:
-   - Go to the [Google Cloud Console](https://console.cloud.google.com/)
-   - Create a new project or select an existing one
-   - Enable the Google Docs API and Google Drive API for your project
-   - Go to Credentials and create OAuth 2.0 Client ID credentials (Web Application)
-   - Add your site's domain to the authorized domains
-   - Add the redirect URI: `https://your-site.com/wp-admin/admin.php?page=gf_settings&subview=google_docs`
-   - Copy your Client ID and Client Secret
+1. **Google Cloud project**
+   - Open the [Google Cloud Console](https://console.cloud.google.com/).
+   - Create or select a project.
+   - Enable the **Google Docs API** and **Google Drive API**.
+   - Under **Credentials**, create **OAuth 2.0 Client ID** credentials (application type: **Web application**).
+   - Add your site’s domain under authorized domains if required by Google.
+   - Add this **authorized redirect URI** (replace `https://your-site.com` with your site URL):
+     ```
+     https://your-site.com/wp-admin/admin.php?page=gf_settings&subview=gravityformsgoogledocs
+     ```
+   - Copy the **Client ID** and **Client Secret**.
 
-2. Configure the Plugin:
-   - Go to Forms > Settings > Google Docs
-   - Enter your Google Client ID and Client Secret
-   - Click "Save Settings"
-   - Click the "Connect with Google" button
-   - Sign in to your Google account
-   - Review and approve the requested permissions
-   - You will be redirected back to your site once connected
+2. **Plugin settings**
+   - Go to **Forms → Settings → Google Docs**.
+   - Enter the Client ID and Client Secret, save, then use **Connect with Google** and approve the requested scopes.
+   - After connecting, you will be returned to the add-on settings screen.
 
-3. Create a Feed:
-   - Edit your form
-   - Go to Settings > Google Docs
-   - Click "Add New"
-   - Enter a feed name
-   - Configure your document title and content templates
-   - Optionally specify a Google Drive folder ID
-   - Set up conditional logic if needed
-   - Save the feed
+3. **Form feed**
+   - Edit a form → **Settings → Google Docs** → **Add New**.
+   - Name the feed, set document title and content templates, optional Drive folder ID, and conditional logic as needed, then save.
 
 ## Usage
 
-1. Create a feed in your form settings (as described above)
-2. Use Gravity Forms merge tags in your document title and content templates
-3. Submit the form to automatically create a new Google Doc
-4. The document will be created with the form data inserted where merge tags were used
-5. Document ID and URL are automatically stored with the form entry
+1. Configure at least one Google Docs feed on the form.
+2. Use Gravity Forms merge tags in the document title and body templates.
+3. On submission, a new Google Doc is created and populated with merged values.
+4. The document link and ID are stored on the entry; notes record success or failure details.
 
-## Content Templates
+## Content templates
 
-Use Gravity Forms merge tags to insert form data into your documents:
+Use Gravity Forms merge tags in templates, for example:
 
-**Document Title Example:**
+**Document title**
+
 ```
 Application from {Name:2} - {Date of Entry}
 ```
 
-**Document Content Example:**
+**Body**
+
 ```
 Name: {Name:2}
 Email: {Email:3}
@@ -87,60 +89,71 @@ Submitted on: {Date of Entry}
 Entry ID: {Entry ID}
 ```
 
-## Available Merge Tags
+## Available merge tags
 
-- `{Field Label:Field ID}` - Insert field value by ID
-- `{Date of Entry}` - Submission date
-- `{Entry ID}` - Unique entry identifier
-- `{Form Title}` - The form's title
-- `{User IP}` - Submitter's IP address
-- And all other standard Gravity Forms merge tags
+- `{Field Label:Field ID}` — field value by field ID
+- `{Date of Entry}` — submission date
+- `{Entry ID}` — entry ID
+- `{Form Title}` — form title
+- `{User IP}` — submitter IP
+- Other standard Gravity Forms merge tags supported by the merge tag UI
 
-## Advanced Features
+## Advanced
 
-### Google Drive Folder Organization
-You can organize your documents by specifying a Google Drive folder ID in your feed settings. To find the folder ID:
-1. Navigate to the desired folder in Google Drive
-2. Copy the folder ID from the URL: `https://drive.google.com/drive/folders/[FOLDER_ID]`
-3. Paste this ID into the "Google Drive Folder ID" field in your feed settings
+### Google Drive folder
+
+Use a folder ID from the Drive URL: `https://drive.google.com/drive/folders/FOLDER_ID` and paste `FOLDER_ID` into the feed’s folder field.
+
+### Debug logging
+
+In `wp-config.php` (or anywhere before the plugin loads), you can enable verbose logging:
+
+```php
+define( 'GF_GOOGLE_DOCS_DEBUG', true );
+```
+
+### Upgrading from a legacy build
+
+If you previously used an add-on registered as `google_docs` or `gr-google-docs`, activating this version runs a one-time migration of add-on settings, access token option, feed rows, entry meta keys (`gfgoogledocs_doc_id`, `gfgoogledocs_doc_url`, `gfgoogledocs_error`), and role capabilities (`gravityforms_googledocs`). Update your Google OAuth **redirect URI** to use `subview=gravityformsgoogledocs` as shown above.
 
 ## Troubleshooting
 
-### Common Issues
+**“Requires Composer dependencies” / activation error**
 
-**"API not authenticated" error:**
-- Verify your Google Cloud Project has the correct APIs enabled
-- Check that your OAuth credentials are correctly configured
-- Ensure the redirect URI matches exactly
-- Try disconnecting and reconnecting your Google account
+- Run `composer install` in the `gravityformsgoogledocs` plugin directory so `vendor/autoload.php` exists.
 
-**Documents not being created:**
-- Check that your feed is active and properly configured
-- Verify that conditional logic (if used) is being met
-- Review the form's entry notes for any error messages
-- Enable debug logging to see detailed error information
+**“API not authenticated”**
 
-**Permission denied errors:**
-- Ensure your Google account has permission to create documents
-- Check that the Google Drive API is enabled in your Google Cloud Project
-- Verify that you've granted all requested permissions during OAuth setup
+- Confirm both APIs are enabled in Google Cloud.
+- Verify Client ID/Secret and that the redirect URI matches exactly (including `subview=gravityformsgoogledocs`).
+- Disconnect and reconnect Google from **Forms → Settings → Google Docs**.
 
+**Documents not created**
+
+- Confirm the feed is active and conditional logic passes.
+- Check entry notes for errors.
+- Enable `GF_GOOGLE_DOCS_DEBUG` for more detail in logs.
+
+**Permission errors**
+
+- Ensure the connected Google account can create Docs and access the target Drive folder.
+- Re-authorize so all requested scopes are granted.
 
 ## Changelog
 
-### Version 1.0.0 (2025-08-11)
-- Initial release
+### 1.0.0
+
+- Initial release as **Gravity Forms Google Docs Add-On** (`gravityformsgoogledocs`): OAuth settings at `subview=gravityformsgoogledocs`, Composer-based Google API client, async feed processing, entry meta keys `gfgoogledocs_*`, capabilities `gravityforms_googledocs` / `gravityforms_googledocs_uninstall`, and automatic migration from legacy `google_docs` / `gr-google-docs` data.
 
 ## Support
 
-For support, please create an issue in the GitHub repository or contact the plugin author at [gravityranger.com](https://gravityranger.com/contact).
+For issues with this repository, open a **GitHub issue**. For Gravity Forms core product support, see [https://www.gravityforms.com](https://www.gravityforms.com).
 
 ## License
 
-This plugin is licensed under the GPL v3 or later. See the LICENSE file for details.
+GPL v3 or later. See the LICENSE file.
 
 ## Credits
 
-- Built with the Gravity Forms Add-On Framework
-- Uses the Google API Client Library for PHP
-- Created by [Chris Eggleston](https://gravityranger.com)
+- [Gravity Forms](https://www.gravityforms.com) add-on framework
+- [Google API Client Library for PHP](https://github.com/googleapis/google-api-php-client)
