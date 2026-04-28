@@ -1,0 +1,114 @@
+/* Plugin settings: OAuth redirect (copy-friendly). */
+.gf-googledocs-redirect-uri-wrap {
+	margin: 12px 0 0;
+	word-break: break-all;
+}
+
+.gf-googledocs-redirect-uri {
+	display: inline-block;
+	padding: 8px 12px;
+	background: #f6f7f7;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	font-size: 13px;
+	line-height: 1.45;
+	user-select: all;
+}
+
+/* Auth actions: GF settings UI can reset .button-primary on links; match WP admin. */
+.gf-googledocs-auth-primary-action {
+	margin: 0 0 12px;
+}
+
+.gf-googledocs-auth-button.button-primary,
+.gform-settings-panel__content .gf-googledocs-auth-button.button-primary {
+	background: #2271b1 !important;
+	border-color: #2271b1 !important;
+	color: #fff !important;
+	box-shadow: none !important;
+}
+
+.gf-googledocs-auth-button.button-primary:hover,
+.gf-googledocs-auth-button.button-primary:focus,
+.gform-settings-panel__content .gf-googledocs-auth-button.button-primary:hover,
+.gform-settings-panel__content .gf-googledocs-auth-button.button-primary:focus {
+	background: #135e96 !important;
+	border-color: #135e96 !important;
+	color: #fff !important;
+}
+
+.gf-googledocs-auth-button.button-secondary,
+.gform-settings-panel__content .gf-googledocs-auth-button.button-secondary {
+	background: #f6f7f7 !important;
+	border-color: #2271b1 !important;
+	color: #2271b1 !important;
+	box-shadow: none !important;
+}
+
+.gf-googledocs-auth-button.button-secondary:hover,
+.gf-googledocs-auth-button.button-secondary:focus,
+.gform-settings-panel__content .gf-googledocs-auth-button.button-secondary:hover,
+.gform-settings-panel__content .gf-googledocs-auth-button.button-secondary:focus {
+	background: #f0f0f1 !important;
+	border-color: #0a4b78 !important;
+	color: #0a4b78 !important;
+}
+
+.authentication-container {
+	margin: 20px 0;
+}
+
+.authentication-container .message-container {
+	margin-top: 20px;
+}
+
+.authentication-container .alert {
+	background: #fff;
+	border-left: 4px solid #46b450;
+	box-shadow: 0 1px 1px 0 rgba(0, 0, 0, 0.1);
+	margin: 0;
+	padding: 1px 12px;
+}
+
+.authentication-container .alert.success {
+	border-color: #46b450;
+}
+
+.gform-settings-panel__content .authentication-container:first-child {
+	margin-top: 0;
+}
+
+.gform-settings-field__header {
+	margin-bottom: 8px;
+}
+
+.gf-googledocs-auth-button {
+	font-size: 14px !important;
+	padding: 8px 16px !important;
+	text-decoration: none !important;
+	border-radius: 4px !important;
+}
+
+.alert {
+	padding: 10px;
+	border-radius: 4px;
+	margin: 10px 0;
+}
+
+.alert-success {
+	background-color: #d4edda;
+	border: 1px solid #c3e6cb;
+	color: #155724;
+}
+
+.alert-warning {
+	background-color: #fff3cd;
+	border: 1px solid #ffeaa7;
+	color: #856404;
+}
+
+.alert-error {
+	background-color: #f8d7da;
+	border: 1px solid #f5c6cb;
+	color: #721c24;
+}

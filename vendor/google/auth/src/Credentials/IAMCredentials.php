@@ -71,7 +71,7 @@ class IAMCredentials
      *
      * @param array<mixed> $metadata metadata hashmap
      * @param string $unusedAuthUri optional auth uri
-     * @param callable|null $httpHandler callback which delivers psr7 request
+     * @param callable $httpHandler callback which delivers psr7 request
      *        Note: this param is unused here, only included here for
      *        consistency with other credentials class
      *

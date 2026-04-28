@@ -53,8 +53,8 @@ class ProxyAuthTokenMiddleware
      * Creates a new ProxyAuthTokenMiddleware.
      *
      * @param FetchAuthTokenInterface $fetcher is used to fetch the auth token
-     * @param callable|null $httpHandler (optional) callback which delivers psr7 request
-     * @param callable|null $tokenCallback (optional) function to be called when a new token is fetched.
+     * @param callable $httpHandler (optional) callback which delivers psr7 request
+     * @param callable $tokenCallback (optional) function to be called when a new token is fetched.
      */
     public function __construct(
         FetchAuthTokenInterface $fetcher,

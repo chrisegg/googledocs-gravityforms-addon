@@ -30,10 +30,6 @@ class ReplaceImageRequest extends \Google\Model
   /**
    * @var string
    */
-  public $tabId;
-  /**
-   * @var string
-   */
   public $uri;
 
   /**
@@ -63,20 +59,6 @@ class ReplaceImageRequest extends \Google\Model
   public function getImageReplaceMethod()
   {
     return $this->imageReplaceMethod;
-  }
-  /**
-   * @param string
-   */
-  public function setTabId($tabId)
-  {
-    $this->tabId = $tabId;
-  }
-  /**
-   * @return string
-   */
-  public function getTabId()
-  {
-    return $this->tabId;
   }
   /**
    * @param string

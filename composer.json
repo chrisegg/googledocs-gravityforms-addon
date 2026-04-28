@@ -2,17 +2,22 @@
     "name": "gravityranger/gravityformsgoogledocs-addon",
     "description": "Google Docs Add-On for Gravity Forms",
     "type": "wordpress-plugin",
-    "require": {
-        "google/apiclient": "^2.15.0"
-    },
-    "autoload": {
-        "classmap": [
-            "includes/"
-        ]
+    "require": {},
+    "require-dev": {
+        "google/apiclient": "^2.15"
     },
     "config": {
         "platform": {
             "php": "7.4"
         }
+    },
+    "scripts": {
+        "pre-autoload-dump": "Google\\Task\\Composer::cleanup"
+    },
+    "extra": {
+        "google/apiclient-services": [
+            "Docs",
+            "Drive"
+        ]
     }
 }

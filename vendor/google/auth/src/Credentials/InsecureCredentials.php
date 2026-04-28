@@ -36,7 +36,7 @@ class InsecureCredentials implements FetchAuthTokenInterface
     /**
      * Fetches the auth token. In this case it returns an empty string.
      *
-     * @param callable|null $httpHandler
+     * @param callable $httpHandler
      * @return array{access_token:string} A set of auth related metadata
      */
     public function fetchAuthToken(?callable $httpHandler = null)

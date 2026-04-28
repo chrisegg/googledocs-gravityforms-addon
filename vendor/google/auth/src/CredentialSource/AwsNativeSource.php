@@ -103,7 +103,7 @@ class AwsNativeSource implements ExternalAccountCredentialSourceInterface
         $headers['x-goog-cloud-target-resource'] = $this->audience;
 
         // Format headers as they're expected in the subject token
-        $formattedHeaders = array_map(
+        $formattedHeaders= array_map(
             fn ($k, $v) => ['key' => $k, 'value' => $v],
             array_keys($headers),
             $headers,
@@ -326,21 +326,6 @@ class AwsNativeSource implements ExternalAccountCredentialSourceInterface
         }
 
         return null;
-    }
-
-    /**
-     * Gets the unique key for caching
-     * For AwsNativeSource the values are:
-     * Imdsv2SessionTokenUrl.SecurityCredentialsUrl.RegionUrl.RegionalCredVerificationUrl
-     *
-     * @return string
-     */
-    public function getCacheKey(): string
-    {
-        return ($this->imdsv2SessionTokenUrl ?? '') .
-            '.' . ($this->securityCredentialsUrl ?? '') .
-            '.' . $this->regionUrl .
-            '.' . $this->regionalCredVerificationUrl;
     }
 
     /**

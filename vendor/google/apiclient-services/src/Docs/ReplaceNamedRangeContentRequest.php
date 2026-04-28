@@ -27,8 +27,6 @@ class ReplaceNamedRangeContentRequest extends \Google\Model
    * @var string
    */
   public $namedRangeName;
-  protected $tabsCriteriaType = TabsCriteria::class;
-  protected $tabsCriteriaDataType = '';
   /**
    * @var string
    */
@@ -61,20 +59,6 @@ class ReplaceNamedRangeContentRequest extends \Google\Model
   public function getNamedRangeName()
   {
     return $this->namedRangeName;
-  }
-  /**
-   * @param TabsCriteria
-   */
-  public function setTabsCriteria(TabsCriteria $tabsCriteria)
-  {
-    $this->tabsCriteria = $tabsCriteria;
-  }
-  /**
-   * @return TabsCriteria
-   */
-  public function getTabsCriteria()
-  {
-    return $this->tabsCriteria;
   }
   /**
    * @param string

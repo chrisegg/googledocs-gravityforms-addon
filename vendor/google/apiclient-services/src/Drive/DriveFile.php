@@ -91,10 +91,6 @@ class DriveFile extends \Google\Collection
   /**
    * @var bool
    */
-  public $inheritedPermissionsDisabled;
-  /**
-   * @var bool
-   */
   public $isAppAuthorized;
   /**
    * @var string
@@ -512,20 +508,6 @@ class DriveFile extends \Google\Collection
   public function getImageMediaMetadata()
   {
     return $this->imageMediaMetadata;
-  }
-  /**
-   * @param bool
-   */
-  public function setInheritedPermissionsDisabled($inheritedPermissionsDisabled)
-  {
-    $this->inheritedPermissionsDisabled = $inheritedPermissionsDisabled;
-  }
-  /**
-   * @return bool
-   */
-  public function getInheritedPermissionsDisabled()
-  {
-    return $this->inheritedPermissionsDisabled;
   }
   /**
    * @param bool

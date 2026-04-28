@@ -25,10 +25,6 @@ class UpdateDocumentStyleRequest extends \Google\Model
    * @var string
    */
   public $fields;
-  /**
-   * @var string
-   */
-  public $tabId;
 
   /**
    * @param DocumentStyle
@@ -57,20 +53,6 @@ class UpdateDocumentStyleRequest extends \Google\Model
   public function getFields()
   {
     return $this->fields;
-  }
-  /**
-   * @param string
-   */
-  public function setTabId($tabId)
-  {
-    $this->tabId = $tabId;
-  }
-  /**
-   * @return string
-   */
-  public function getTabId()
-  {
-    return $this->tabId;
   }
 }
 

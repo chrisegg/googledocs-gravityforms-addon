@@ -60,7 +60,7 @@ class GCECache
      * Caches the result of onGce so the metadata server is not called multiple
      * times.
      *
-     * @param callable|null $httpHandler callback which delivers psr7 request
+     * @param callable $httpHandler callback which delivers psr7 request
      * @return bool True if this a GCEInstance, false otherwise
      */
     public function onGce(?callable $httpHandler = null)

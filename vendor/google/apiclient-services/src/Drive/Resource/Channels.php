@@ -30,10 +30,7 @@ use Google\Service\Drive\Channel;
 class Channels extends \Google\Service\Resource
 {
   /**
-   * Stops watching resources through this channel. For more information, see
-   * [Notifications for resource
-   * changes](https://developers.google.com/drive/api/guides/push).
-   * (channels.stop)
+   * Stops watching resources through this channel. (channels.stop)
    *
    * @param Channel $postBody
    * @param array $optParams Optional parameters.

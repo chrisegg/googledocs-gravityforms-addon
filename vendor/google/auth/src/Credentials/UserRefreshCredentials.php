@@ -20,8 +20,6 @@ namespace Google\Auth\Credentials;
 use Google\Auth\CredentialsLoader;
 use Google\Auth\GetQuotaProjectInterface;
 use Google\Auth\OAuth2;
-use InvalidArgumentException;
-use LogicException;
 
 /**
  * Authenticates requests using User Refresh credentials.
@@ -37,13 +35,6 @@ use LogicException;
 class UserRefreshCredentials extends CredentialsLoader implements GetQuotaProjectInterface
 {
     /**
-     * Used in observability metric headers
-     *
-     * @var string
-     */
-    private const CRED_TYPE = 'u';
-
-    /**
      * The OAuth2 instance used to conduct authorization.
      *
      * @var OAuth2
@@ -58,58 +49,40 @@ class UserRefreshCredentials extends CredentialsLoader implements GetQuotaProjec
     protected $quotaProject;
 
     /**
-     * Whether this is an ID token request or an access token request. Used when
-     * building the metric header.
-     */
-    private bool $isIdTokenRequest = false;
-
-    /**
      * Create a new UserRefreshCredentials.
      *
-     * @param string|string[]|null $scope the scope of the access request, expressed
+     * @param string|string[] $scope the scope of the access request, expressed
      *   either as an Array or as a space-delimited String.
      * @param string|array<mixed> $jsonKey JSON credential file path or JSON credentials
      *   as an associative array
-     * @param string|null $targetAudience The audience for the ID token.
      */
     public function __construct(
         $scope,
-        $jsonKey,
-        ?string $targetAudience = null
+        $jsonKey
     ) {
         if (is_string($jsonKey)) {
             if (!file_exists($jsonKey)) {
-                throw new InvalidArgumentException('file does not exist or is unreadable');
+                throw new \InvalidArgumentException('file does not exist');
             }
             $json = file_get_contents($jsonKey);
             if (!$jsonKey = json_decode((string) $json, true)) {
-                throw new LogicException('invalid json for auth config');
+                throw new \LogicException('invalid json for auth config');
             }
         }
         if (!array_key_exists('client_id', $jsonKey)) {
-            throw new InvalidArgumentException(
+            throw new \InvalidArgumentException(
                 'json key is missing the client_id field'
             );
         }
         if (!array_key_exists('client_secret', $jsonKey)) {
-            throw new InvalidArgumentException(
+            throw new \InvalidArgumentException(
                 'json key is missing the client_secret field'
             );
         }
         if (!array_key_exists('refresh_token', $jsonKey)) {
-            throw new InvalidArgumentException(
+            throw new \InvalidArgumentException(
                 'json key is missing the refresh_token field'
             );
-        }
-        if ($scope && $targetAudience) {
-            throw new InvalidArgumentException(
-                'Scope and targetAudience cannot both be supplied'
-            );
-        }
-        $additionalClaims = [];
-        if ($targetAudience) {
-            $additionalClaims = ['target_audience' => $targetAudience];
-            $this->isIdTokenRequest = true;
         }
         $this->auth = new OAuth2([
             'clientId' => $jsonKey['client_id'],
@@ -117,7 +90,6 @@ class UserRefreshCredentials extends CredentialsLoader implements GetQuotaProjec
             'refresh_token' => $jsonKey['refresh_token'],
             'scope' => $scope,
             'tokenCredentialUri' => self::TOKEN_CREDENTIAL_URI,
-            'additionalClaims' => $additionalClaims,
         ]);
         if (array_key_exists('quota_project_id', $jsonKey)) {
             $this->quotaProject = (string) $jsonKey['quota_project_id'];
@@ -125,11 +97,7 @@ class UserRefreshCredentials extends CredentialsLoader implements GetQuotaProjec
     }
 
     /**
-     * @param callable|null $httpHandler
-     * @param array<mixed> $headers [optional] Metrics headers to be inserted
-     *     into the token endpoint request present.
-     *     This could be passed from ImersonatedServiceAccountCredentials as it uses
-     *     UserRefreshCredentials as source credentials.
+     * @param callable $httpHandler
      *
      * @return array<mixed> {
      *     A set of auth related metadata, containing the following
@@ -141,30 +109,17 @@ class UserRefreshCredentials extends CredentialsLoader implements GetQuotaProjec
      *     @type string $id_token
      * }
      */
-    public function fetchAuthToken(?callable $httpHandler = null, array $headers = [])
+    public function fetchAuthToken(?callable $httpHandler = null)
     {
-        return $this->auth->fetchAuthToken(
-            $httpHandler,
-            $this->applyTokenEndpointMetrics($headers, $this->isIdTokenRequest ? 'it' : 'at')
-        );
+        return $this->auth->fetchAuthToken($httpHandler);
     }
 
     /**
-     * Return the Cache Key for the credentials.
-     * The format for the Cache key is one of the following:
-     * ClientId.Scope
-     * ClientId.Audience
-     *
      * @return string
      */
     public function getCacheKey()
     {
-        $scopeOrAudience = $this->auth->getScope();
-        if (!$scopeOrAudience) {
-            $scopeOrAudience = $this->auth->getAudience();
-        }
-
-        return $this->auth->getClientId() . '.' . $scopeOrAudience;
+        return $this->auth->getClientId() . ':' . $this->auth->getCacheKey();
     }
 
     /**
@@ -193,10 +148,5 @@ class UserRefreshCredentials extends CredentialsLoader implements GetQuotaProjec
     public function getGrantedScope()
     {
         return $this->auth->getGrantedScope();
-    }
-
-    protected function getCredType(): string
-    {
-        return self::CRED_TYPE;
     }
 }

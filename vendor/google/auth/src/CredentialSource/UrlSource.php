@@ -39,11 +39,11 @@ class UrlSource implements ExternalAccountCredentialSourceInterface
     private ?array $headers;
 
     /**
-     * @param string $url                        The URL to fetch the subject token from.
-     * @param string|null $format                The format of the token in the response. Can be null or "json".
-     * @param string|null $subjectTokenFieldName The name of the field containing the token in the response. This is required
+     * @param string $url                   The URL to fetch the subject token from.
+     * @param string $format                The format of the token in the response. Can be null or "json".
+     * @param string $subjectTokenFieldName The name of the field containing the token in the response. This is required
      *                                      when format is "json".
-     * @param array<string, string|string[]>|null $headers Request headers to send in with the request to the URL.
+     * @param array<string, string|string[]> $headers Request headers to send in with the request to the URL.
      */
     public function __construct(
         string $url,
@@ -93,17 +93,5 @@ class UrlSource implements ExternalAccountCredentialSourceInterface
         }
 
         return $body;
-    }
-
-    /**
-     * Get the cache key for the credentials.
-     * The format for the cache key is:
-     * URL
-     *
-     * @return ?string
-     */
-    public function getCacheKey(): ?string
-    {
-        return $this->url;
     }
 }

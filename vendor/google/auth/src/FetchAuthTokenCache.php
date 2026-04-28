@@ -45,7 +45,7 @@ class FetchAuthTokenCache implements
 
     /**
      * @param FetchAuthTokenInterface $fetcher A credentials fetcher
-     * @param array<mixed>|null $cacheConfig Configuration for the cache
+     * @param array<mixed> $cacheConfig Configuration for the cache
      * @param CacheItemPoolInterface $cache
      */
     public function __construct(
@@ -76,7 +76,7 @@ class FetchAuthTokenCache implements
      * Checks the cache for a valid auth token and fetches the auth tokens
      * from the supplied fetcher.
      *
-     * @param callable|null $httpHandler callback which delivers psr7 request
+     * @param callable $httpHandler callback which delivers psr7 request
      * @return array<mixed> the response
      * @throws \Exception
      */
@@ -112,7 +112,7 @@ class FetchAuthTokenCache implements
     /**
      * Get the client name from the fetcher.
      *
-     * @param callable|null $httpHandler An HTTP handler to deliver PSR7 requests.
+     * @param callable $httpHandler An HTTP handler to deliver PSR7 requests.
      * @return string
      */
     public function getClientName(?callable $httpHandler = null)
@@ -176,10 +176,10 @@ class FetchAuthTokenCache implements
         return null;
     }
 
-    /**
+    /*
      * Get the Project ID from the fetcher.
      *
-     * @param callable|null $httpHandler Callback which delivers psr7 request
+     * @param callable $httpHandler Callback which delivers psr7 request
      * @return string|null
      * @throws \RuntimeException If the fetcher does not implement
      *     `Google\Auth\ProvidesProjectIdInterface`.
@@ -227,7 +227,7 @@ class FetchAuthTokenCache implements
      *
      * @param array<mixed> $metadata metadata hashmap
      * @param string $authUri optional auth uri
-     * @param callable|null $httpHandler callback which delivers psr7 request
+     * @param callable $httpHandler callback which delivers psr7 request
      * @return array<mixed> updated metadata hashmap
      * @throws \RuntimeException If the fetcher does not implement
      *     `Google\Auth\UpdateMetadataInterface`.

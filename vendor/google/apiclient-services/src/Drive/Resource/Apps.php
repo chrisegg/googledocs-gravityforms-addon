@@ -31,8 +31,7 @@ use Google\Service\Drive\AppList;
 class Apps extends \Google\Service\Resource
 {
   /**
-   * Gets a specific app. For more information, see [Return user
-   * info](https://developers.google.com/drive/api/guides/user-info). (apps.get)
+   * Gets a specific app. (apps.get)
    *
    * @param string $appId The ID of the app.
    * @param array $optParams Optional parameters.
@@ -46,9 +45,7 @@ class Apps extends \Google\Service\Resource
     return $this->call('get', [$params], App::class);
   }
   /**
-   * Lists a user's installed apps. For more information, see [Return user
-   * info](https://developers.google.com/drive/api/guides/user-info).
-   * (apps.listApps)
+   * Lists a user's installed apps. (apps.listApps)
    *
    * @param array $optParams Optional parameters.
    *

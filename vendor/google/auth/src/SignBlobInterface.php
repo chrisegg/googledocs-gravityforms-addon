@@ -36,7 +36,7 @@ interface SignBlobInterface extends FetchAuthTokenInterface
     /**
      * Returns the current Client Name.
      *
-     * @param callable|null $httpHandler callback which delivers psr7 request, if
+     * @param callable $httpHandler callback which delivers psr7 request, if
      *     one is required to obtain a client name.
      * @return string
      */
