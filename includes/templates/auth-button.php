@@ -9,14 +9,14 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-$api = new GF_Google_Docs_API();
+$api = $this->get_api();
 
 // Check if we have valid client credentials first
 $client_id = $this->get_plugin_setting('client_id');
 $client_secret = $this->get_plugin_setting('client_secret');
 
 if (empty($client_id) || empty($client_secret)) {
-    echo '<div class="alert alert-warning">' .
+    echo '<div class="gf-googledocs-alert gf-googledocs-alert--warning">' .
         esc_html__('Please enter your Google OAuth credentials above and save settings before connecting.', 'gravityformsgoogledocs') .
         '</div>';
 } else {
@@ -36,7 +36,7 @@ if (empty($client_id) || empty($client_secret)) {
             esc_html__('Disconnect from Google', 'gravityformsgoogledocs')
         );
 
-        echo '<div class="alert alert-success" style="margin-top: 10px;">' .
+        echo '<div class="gf-googledocs-alert gf-googledocs-alert--success" style="margin-top: 10px;">' .
             esc_html__('Successfully connected to Google Docs!', 'gravityformsgoogledocs') .
             '</div>';
     } else {
@@ -48,7 +48,7 @@ if (empty($client_id) || empty($client_secret)) {
                 esc_html__('Connect with Google', 'gravityformsgoogledocs')
             );
         } else {
-            echo '<div class="alert alert-error">' .
+            echo '<div class="gf-googledocs-alert gf-googledocs-alert--error">' .
                 esc_html__('Unable to generate authentication URL. Please check your credentials.', 'gravityformsgoogledocs') .
                 '</div>';
         }

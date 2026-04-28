@@ -30,6 +30,10 @@ along with this program.  If not, see http://www.gnu.org/licenses.
 
 defined('ABSPATH') || die();
 
+if (!defined('GF_GOOGLE_DOCS_PLUGIN_FILE')) {
+    define('GF_GOOGLE_DOCS_PLUGIN_FILE', __FILE__);
+}
+
 // Define the current version of the Google Docs Add-On
 define('GF_GOOGLE_DOCS_VERSION', '1.0.0');
 
@@ -39,6 +43,11 @@ define('GF_GOOGLE_DOCS_MIN_GF_VERSION', '2.7');
 // Define debug mode (set to true to enable verbose logging)
 if (!defined('GF_GOOGLE_DOCS_DEBUG')) {
     define('GF_GOOGLE_DOCS_DEBUG', false);
+}
+
+// Async feed dispatch (Gravity Forms loopback to admin-ajax). Default false to avoid cURL timeouts on hosts where loopback fails.
+if (!defined('GF_GOOGLE_DOCS_ASYNC_FEEDS')) {
+    define('GF_GOOGLE_DOCS_ASYNC_FEEDS', false);
 }
 
 // Define minimum WordPress version
@@ -87,25 +96,49 @@ function gf_googledocs_migrate_legacy_data() {
 
     $feeds_table = $wpdb->prefix . 'gf_addon_feed';
     if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $feeds_table)) === $feeds_table) {
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-        $wpdb->query(
-            "UPDATE `{$feeds_table}` SET `addon_slug` = 'gravityformsgoogledocs' WHERE `addon_slug` IN ( 'google_docs', 'gr-google-docs' )"
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $wpdb->update(
+            $feeds_table,
+            array('addon_slug' => 'gravityformsgoogledocs'),
+            array('addon_slug' => 'google_docs'),
+            array('%s'),
+            array('%s')
+        );
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $wpdb->update(
+            $feeds_table,
+            array('addon_slug' => 'gravityformsgoogledocs'),
+            array('addon_slug' => 'gr-google-docs'),
+            array('%s'),
+            array('%s')
         );
     }
 
     $entry_meta_table = $wpdb->prefix . 'gf_entry_meta';
     if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $entry_meta_table)) === $entry_meta_table) {
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-        $wpdb->query(
-            "UPDATE `{$entry_meta_table}` SET `meta_key` = 'gfgoogledocs_doc_id' WHERE `meta_key` = 'gr_google_doc_id'"
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $wpdb->update(
+            $entry_meta_table,
+            array('meta_key' => 'gfgoogledocs_doc_id'),
+            array('meta_key' => 'gr_google_doc_id'),
+            array('%s'),
+            array('%s')
         );
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-        $wpdb->query(
-            "UPDATE `{$entry_meta_table}` SET `meta_key` = 'gfgoogledocs_doc_url' WHERE `meta_key` = 'gr_google_doc_url'"
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $wpdb->update(
+            $entry_meta_table,
+            array('meta_key' => 'gfgoogledocs_doc_url'),
+            array('meta_key' => 'gr_google_doc_url'),
+            array('%s'),
+            array('%s')
         );
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-        $wpdb->query(
-            "UPDATE `{$entry_meta_table}` SET `meta_key` = 'gfgoogledocs_error' WHERE `meta_key` = 'gr_google_docs_error'"
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $wpdb->update(
+            $entry_meta_table,
+            array('meta_key' => 'gfgoogledocs_error'),
+            array('meta_key' => 'gr_google_docs_error'),
+            array('%s'),
+            array('%s')
         );
     }
 
