@@ -247,9 +247,7 @@ class GF_Google_Docs_API {
 		$merged['issued_at'] = time();
 		update_option( 'gf_googledocs_access_token', $merged );
 		self::reset_authentication_cache();
-		if ( defined( 'GF_GOOGLE_DOCS_DEBUG' ) && GF_GOOGLE_DOCS_DEBUG ) {
-			GFGoogleDocs::get_instance()->log_debug( __METHOD__ . '(): Token saved.' );
-		}
+		GFGoogleDocs::get_instance()->log_debug( __METHOD__ . '(): Token saved.' );
 	}
 
 	/**
@@ -687,9 +685,7 @@ class GF_Google_Docs_API {
 					esc_html__( 'Not authenticated with Google.', 'gravityformsgoogledocs' )
 				);
 			}
-			if ( defined( 'GF_GOOGLE_DOCS_DEBUG' ) && GF_GOOGLE_DOCS_DEBUG ) {
-				GFGoogleDocs::get_instance()->log_debug( __METHOD__ . '(): Creating document: ' . $document_title );
-			}
+			GFGoogleDocs::get_instance()->log_debug( __METHOD__ . '(): Creating document: ' . $document_title );
 			$metadata = array(
 				'name'     => $document_title,
 				'mimeType' => 'application/vnd.google-apps.document',

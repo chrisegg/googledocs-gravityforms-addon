@@ -40,10 +40,6 @@ if ( ! defined( 'GF_GOOGLE_DOCS_PLUGIN_FILE' ) ) {
 define( 'GF_GOOGLE_DOCS_VERSION', '1.0.0' );
 define( 'GF_GOOGLE_DOCS_MIN_GF_VERSION', '2.9.24' );
 
-if ( ! defined( 'GF_GOOGLE_DOCS_DEBUG' ) ) {
-	define( 'GF_GOOGLE_DOCS_DEBUG', false );
-}
-
 if ( ! defined( 'GF_GOOGLE_DOCS_ASYNC_FEEDS' ) ) {
 	define( 'GF_GOOGLE_DOCS_ASYNC_FEEDS', false );
 }

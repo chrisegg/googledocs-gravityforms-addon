@@ -13,29 +13,21 @@ This WordPress plugin integrates Gravity Forms with Google Docs, allowing you to
 - Conditional logic for when documents are created
 - Automatic document creation on form submission
 - Document ID and URL stored on the entry (entry meta); status and errors recorded on the entry notes
-- Optional debug logging via the `GF_GOOGLE_DOCS_DEBUG` constant
-- One-time migration of settings, tokens, feeds, and entry meta from legacy add-on slugs (`google_docs`, `gr-google-docs`) to `gravityformsgoogledocs`
+- Detailed lines in **Forms → Settings → Logging** when **Google Docs** (this add-on) is set to **Debug**
 
 ## Requirements
 
 - WordPress 5.0 or higher
-- Gravity Forms 2.7 or higher
+- Gravity Forms 2.9.24 or higher
 - PHP 7.4 or higher
-- [Composer](https://getcomposer.org/) dependencies installed in the plugin directory (`vendor/` must exist; see Installation)
 - Google Cloud project with Google Docs API and Google Drive API enabled
 - Google OAuth 2.0 credentials (Web application)
 
 ## Installation
 
 1. Copy the plugin into your site so the main file path is **`wp-content/plugins/gravityformsgoogledocs/googledocs.php`** (folder name must match what Gravity Forms expects for this add-on).
-2. From the plugin directory, install PHP dependencies:
-   ```bash
-   composer install --no-dev
-   ```
-3. Activate the plugin through the **Plugins** screen in WordPress.
-4. Go to **Forms → Settings → Google Docs** to configure OAuth and global settings.
-
-If `vendor/autoload.php` is missing, activation will fail with an error asking you to run `composer install`.
+2. Activate the plugin through the **Plugins** screen in WordPress.
+3. Go to **Forms → Settings → Google Docs** to configure OAuth and global settings.
 
 ## Setup
 
@@ -89,38 +81,13 @@ Submitted on: {Date of Entry}
 Entry ID: {Entry ID}
 ```
 
-## Available merge tags
-
-- `{Field Label:Field ID}` — field value by field ID
-- `{Date of Entry}` — submission date
-- `{Entry ID}` — entry ID
-- `{Form Title}` — form title
-- `{User IP}` — submitter IP
-- Other standard Gravity Forms merge tags supported by the merge tag UI
-
 ## Advanced
 
 ### Google Drive folder
 
 Use a folder ID from the Drive URL: `https://drive.google.com/drive/folders/FOLDER_ID` and paste `FOLDER_ID` into the feed’s folder field.
 
-### Debug logging
-
-In `wp-config.php` (or anywhere before the plugin loads), you can enable verbose logging:
-
-```php
-define( 'GF_GOOGLE_DOCS_DEBUG', true );
-```
-
-### Upgrading from a legacy build
-
-If you previously used an add-on registered as `google_docs` or `gr-google-docs`, activating this version runs a one-time migration of add-on settings, access token option, feed rows, entry meta keys (`gfgoogledocs_doc_id`, `gfgoogledocs_doc_url`, `gfgoogledocs_error`), and role capabilities (`gravityforms_googledocs`). Update your Google OAuth **redirect URI** to use `subview=gravityformsgoogledocs` as shown above.
-
 ## Troubleshooting
-
-**“Requires Composer dependencies” / activation error**
-
-- Run `composer install` in the `gravityformsgoogledocs` plugin directory so `vendor/autoload.php` exists.
 
 **“API not authenticated”**
 
@@ -132,7 +99,7 @@ If you previously used an add-on registered as `google_docs` or `gr-google-docs`
 
 - Confirm the feed is active and conditional logic passes.
 - Check entry notes for errors.
-- Enable `GF_GOOGLE_DOCS_DEBUG` for more detail in logs.
+- Enable **Google Docs** add-on logging at **Debug**, then View log for this add‑on (optionally core **Gravity Forms** Debug for feed-framework lines).
 
 **Permission errors**
 
@@ -143,7 +110,7 @@ If you previously used an add-on registered as `google_docs` or `gr-google-docs`
 
 ### 1.0.0
 
-- Initial release as **Gravity Forms Google Docs Add-On** (`gravityformsgoogledocs`): OAuth settings at `subview=gravityformsgoogledocs`, Composer-based Google API client, async feed processing, entry meta keys `gfgoogledocs_*`, capabilities `gravityforms_googledocs` / `gravityforms_googledocs_uninstall`, and automatic migration from legacy `google_docs` / `gr-google-docs` data.
+- Initial release all new.
 
 ## Support
 
@@ -156,4 +123,4 @@ GPL v3 or later. See the LICENSE file.
 ## Credits
 
 - [Gravity Forms](https://www.gravityforms.com) add-on framework
-- [Google API Client Library for PHP](https://github.com/googleapis/google-api-php-client)
+- Google Docs API and Google Drive API (OAuth 2.0 and REST)

@@ -480,13 +480,9 @@ class GFGoogleDocs extends \GFFeedAddOn {
                 exit;
             }
 
-            $debug_mode = defined('GF_GOOGLE_DOCS_DEBUG') && GF_GOOGLE_DOCS_DEBUG;
-
-            if ($debug_mode) {
-                $this->log_debug(__METHOD__ . '(): Starting OAuth callback handling.');
-                $safe_get = array_diff_key(wp_unslash($_GET), array_flip(array('code', 'state')));
-                $this->log_debug(__METHOD__ . '(): Callback GET (code/state redacted): ' . print_r($safe_get, true));
-            }
+            $this->log_debug( __METHOD__ . '(): Starting OAuth callback handling.' );
+            $safe_get = array_diff_key( wp_unslash( $_GET ), array_flip( array( 'code', 'state' ) ) );
+            $this->log_debug( __METHOD__ . '(): Callback GET (code/state redacted): ' . print_r( $safe_get, true ) );
 
             $code = isset($_GET['code']) ? sanitize_text_field(wp_unslash($_GET['code'])) : '';
             if (strlen($code) < 10) {
@@ -509,9 +505,7 @@ class GFGoogleDocs extends \GFFeedAddOn {
                 }
 
                 \GFCommon::add_message( esc_html__( 'Successfully authenticated with Google.', 'gravityformsgoogledocs' ) );
-                if ($debug_mode) {
-                    $this->log_debug(__METHOD__ . '(): Successfully authenticated with Google.');
-                }
+                $this->log_debug( __METHOD__ . '(): Successfully authenticated with Google.' );
             } else {
                 $error_message = esc_html__('Failed to authenticate with Google. Please try again.', 'gravityformsgoogledocs');
                 \GFCommon::add_error_message( $error_message );
@@ -558,9 +552,7 @@ class GFGoogleDocs extends \GFFeedAddOn {
         if ($success) {
             \GFCommon::add_message( esc_html__( 'Successfully disconnected from Google.', 'gravityformsgoogledocs' ) );
             delete_transient('gf_googledocs_account_info');
-            if (defined('GF_GOOGLE_DOCS_DEBUG') && GF_GOOGLE_DOCS_DEBUG) {
-                $this->log_debug(__METHOD__ . '(): Successfully disconnected from Google.');
-            }
+            $this->log_debug( __METHOD__ . '(): Successfully disconnected from Google.' );
         } else {
             $error_message = esc_html__( 'Failed to disconnect from Google. Please try again.', 'gravityformsgoogledocs' );
             \GFCommon::add_error_message( $error_message );
@@ -587,9 +579,6 @@ class GFGoogleDocs extends \GFFeedAddOn {
      */
     public function process_feed( $feed, $entry, $form ) {
         try {
-            if ( defined( 'GF_GOOGLE_DOCS_DEBUG' ) && GF_GOOGLE_DOCS_DEBUG ) {
-                $this->log_debug( __METHOD__ . '(): Processing feed.' );
-            }
 
             if ( ! is_array( $feed ) || ! is_array( $entry ) || ! is_array( $form ) ) {
                 $message = esc_html__( 'Feed was not processed because of invalid feed, entry, or form data.', 'gravityformsgoogledocs' );
@@ -688,18 +677,16 @@ class GFGoogleDocs extends \GFFeedAddOn {
                     'success'
                 );
 
-                if ( defined( 'GF_GOOGLE_DOCS_DEBUG' ) && GF_GOOGLE_DOCS_DEBUG ) {
-                    $this->log_debug(
-                        __METHOD__ . '(): Document created successfully.'
-                            . ' Form #' . $form_id . ': ' . (string) rgar( $form, 'title' )
-                            . ' | Entry #' . rgar( $entry, 'id' )
-                            . ' | Feed #' . rgar( $feed, 'id' ) . ': ' . (string) rgars( $feed, 'meta/feedName' )
-                            . ' | Document title: ' . $document_title
-                            . ' | Document ID: ' . $doc_id
-                            . ' | URL: ' . $doc_url
-                            . ( rgblank( $folder_id ) ? '' : ' | Folder ID: ' . $folder_id )
-                    );
-                }
+                $this->log_debug(
+                    __METHOD__
+                        . '(): Document created. Form #' . $form_id . ': ' . (string) rgar( $form, 'title' )
+                        . ' | Entry #' . rgar( $entry, 'id' )
+                        . ' | Feed #' . rgar( $feed, 'id' ) . ': ' . (string) rgars( $feed, 'meta/feedName' )
+                        . ' | Document title: ' . $document_title
+                        . ' | Document ID: ' . $doc_id
+                        . ' | URL: ' . $doc_url
+                        . ( rgblank( $folder_id ) ? '' : ' | Folder ID: ' . $folder_id )
+                );
 
                 return $entry;
             }
@@ -1034,9 +1021,7 @@ class GFGoogleDocs extends \GFFeedAddOn {
 
         // Validate inputs
         if (!is_array($form) || !is_array($entry)) {
-            if (defined('GF_GOOGLE_DOCS_DEBUG') && GF_GOOGLE_DOCS_DEBUG) {
-                $this->log_debug(__METHOD__ . '(): Invalid form or entry data provided for merge tag processing');
-            }
+            $this->log_debug(__METHOD__ . '(): Invalid form or entry data provided for merge tag processing');
             return $template;
         }
 
@@ -1046,9 +1031,6 @@ class GFGoogleDocs extends \GFFeedAddOn {
         // Check if we have cached result (short cache for performance)
         static $merge_cache = array();
         if (isset($merge_cache[$cache_key])) {
-            if (defined('GF_GOOGLE_DOCS_DEBUG') && GF_GOOGLE_DOCS_DEBUG) {
-                $this->log_debug(__METHOD__ . '(): Using cached merge tag result');
-            }
             return $merge_cache[$cache_key];
         }
 
@@ -1079,10 +1061,6 @@ class GFGoogleDocs extends \GFFeedAddOn {
                 $merge_cache[$cache_key] = $processed;
             }
 
-            if (defined('GF_GOOGLE_DOCS_DEBUG') && GF_GOOGLE_DOCS_DEBUG) {
-                $this->log_debug(__METHOD__ . '(): Successfully processed merge tags');
-            }
-
             return $processed;
 
         } catch ( \Exception $e ) {
@@ -1110,9 +1088,8 @@ class GFGoogleDocs extends \GFFeedAddOn {
         
         $this->log_error($log_message);
         
-        // Log additional data in debug mode
-        if (defined('GF_GOOGLE_DOCS_DEBUG') && GF_GOOGLE_DOCS_DEBUG && !empty($data)) {
-            $this->log_debug('Additional error data: ' . wp_json_encode($data));
+        if ( ! empty( $data ) ) {
+            $this->log_debug( 'Additional error data: ' . wp_json_encode( $data ) );
         }
         
         // Add admin notice for critical errors if user can manage options
@@ -1245,9 +1222,7 @@ class GFGoogleDocs extends \GFFeedAddOn {
                 delete_transient('gf_googledocs_account_info');
                 GF_Google_Docs_API::reset_authentication_cache();
 
-                if (defined('GF_GOOGLE_DOCS_DEBUG') && GF_GOOGLE_DOCS_DEBUG) {
-                    $this->log_debug(__METHOD__ . '(): Cleared access token due to credential change');
-                }
+                $this->log_debug(__METHOD__ . '(): Cleared access token due to credential change');
             }
             
             // Clear cache when settings change to force re-validation
@@ -1255,9 +1230,7 @@ class GFGoogleDocs extends \GFFeedAddOn {
                 $api = $this->get_api();
                 $api->clear_all_cache();
                 
-                if (defined('GF_GOOGLE_DOCS_DEBUG') && GF_GOOGLE_DOCS_DEBUG) {
-                    $this->log_debug(__METHOD__ . '(): Cleared API cache due to settings change');
-                }
+                $this->log_debug(__METHOD__ . '(): Cleared API cache due to settings change');
             }
 
             return $settings;
@@ -1299,13 +1272,7 @@ class GFGoogleDocs extends \GFFeedAddOn {
      */
     public function feed_settings_page() {
         try {
-            // Only log detailed steps if debug mode is enabled
-            $debug_mode = defined('GF_GOOGLE_DOCS_DEBUG') && GF_GOOGLE_DOCS_DEBUG;
-            
-            if ($debug_mode) {
-                $this->log_debug(__METHOD__ . '(): Starting to render feed settings page.');
-            }
-            
+
             // Get form ID
             $form_id = rgget('id');
             if (empty($form_id)) {
@@ -1320,19 +1287,11 @@ class GFGoogleDocs extends \GFFeedAddOn {
                 wp_die(esc_html__('Form not found.', 'gravityformsgoogledocs'));
             }
 
-            if ($debug_mode) {
-                $this->log_debug(__METHOD__ . '(): Retrieved form #' . $form_id);
-            }
-
             // Display the page
             \GFFormSettings::page_header( $form );
             $feed_list = $this->get_feeds($form_id);
             $this->feed_list_page($feed_list, $form);
             \GFFormSettings::page_footer();
-
-            if ($debug_mode) {
-                $this->log_debug(__METHOD__ . '(): Successfully rendered feed settings page.');
-            }
         } catch ( \Exception $e ) {
             $this->log_error(__METHOD__ . '(): Error rendering feed settings page: ' . $e->getMessage());
             wp_die(esc_html__('Error loading feed settings page.', 'gravityformsgoogledocs'));
@@ -1412,10 +1371,7 @@ class GFGoogleDocs extends \GFFeedAddOn {
      */
     public function validate_feed_settings($feed) {
         try {
-            $debug_mode = defined('GF_GOOGLE_DOCS_DEBUG') && GF_GOOGLE_DOCS_DEBUG;
-            if ($debug_mode) {
-                $this->log_debug(__METHOD__ . '(): Starting feed validation.');
-            }
+            $this->log_debug(__METHOD__ . '(): Starting feed validation.');
             
             // Get feed meta
             $feed_meta = rgar($feed, 'meta', array());
@@ -1448,9 +1404,7 @@ class GFGoogleDocs extends \GFFeedAddOn {
                 }
             }
             
-            if ($debug_mode) {
-                $this->log_debug(__METHOD__ . '(): Feed validation successful.');
-            }
+            $this->log_debug(__METHOD__ . '(): Feed validation successful.');
             return true;
         } catch ( \Exception $e ) {
             $this->log_error(__METHOD__ . '(): Feed validation failed. Error: ' . $e->getMessage());
@@ -1471,10 +1425,7 @@ class GFGoogleDocs extends \GFFeedAddOn {
      */
     public function validate_settings($fields, $settings) {
         try {
-            $debug_mode = defined('GF_GOOGLE_DOCS_DEBUG') && GF_GOOGLE_DOCS_DEBUG;
-            if ($debug_mode) {
-                $this->log_debug(__METHOD__ . '(): Starting settings validation.');
-            }
+            $this->log_debug(__METHOD__ . '(): Starting settings validation.');
             
             // Get parent validation
             $settings = parent::validate_settings($fields, $settings);
@@ -1509,9 +1460,7 @@ class GFGoogleDocs extends \GFFeedAddOn {
                 }
             }
             
-            if ($debug_mode) {
-                $this->log_debug(__METHOD__ . '(): Settings validation completed.');
-            }
+            $this->log_debug(__METHOD__ . '(): Settings validation completed.');
             return $settings;
         } catch ( \Exception $e ) {
             $this->log_error(__METHOD__ . '(): Settings validation failed. Error: ' . $e->getMessage());
