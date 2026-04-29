@@ -56,20 +56,6 @@ if ( ! defined( 'GF_GOOGLE_DOCS_MIN_PHP_VERSION' ) ) {
 	define( 'GF_GOOGLE_DOCS_MIN_PHP_VERSION', '7.4' );
 }
 
-/**
- * Path to bundled Composer autoload (Google API client). Shipped in release zips; developers may run `composer install`.
- *
- * @return string
- */
-function gf_googledocs_get_vendor_autoload_path() {
-	return dirname( __FILE__ ) . '/vendor/autoload.php';
-}
-
-$gf_googledocs_autoload = gf_googledocs_get_vendor_autoload_path();
-if ( is_readable( $gf_googledocs_autoload ) ) {
-	require_once $gf_googledocs_autoload;
-}
-
 add_action( 'plugins_loaded', 'gf_googledocs_check_compatibility', 2 );
 
 /**
@@ -147,35 +133,10 @@ class GF_GoogleDocs_Bootstrap {
 	 * @since 1.0
 	 */
 	public static function load_addon() {
-		if ( ! class_exists( 'Google_Client' ) ) {
-			add_action( 'admin_notices', array( 'GF_GoogleDocs_Bootstrap', 'missing_google_client' ) );
-			return;
-		}
-
 		require_once plugin_dir_path( __FILE__ ) . 'includes/class-gf-googledocs-api.php';
 		require_once plugin_dir_path( __FILE__ ) . 'includes/class-gf-googledocs.php';
 
 		GFAddOn::register( \Gravity_Forms\Gravity_Forms_GoogleDocs\GFGoogleDocs::class );
-	}
-
-	/**
-	 * Admin notice when the bundled Google API client is missing.
-	 *
-	 * @since 1.0
-	 */
-	public static function missing_google_client() {
-		?>
-		<div class="notice notice-error">
-			<p>
-				<?php
-				echo esc_html__(
-					'Google Docs for Gravity Forms requires the bundled Google API libraries. If you are developing the plugin, run `composer install` in the plugin directory and include the `vendor` folder in your deployment.',
-					'gravityformsgoogledocs'
-				);
-				?>
-			</p>
-		</div>
-		<?php
 	}
 }
 
@@ -191,19 +152,3 @@ function gf_googledocs() {
 		? \Gravity_Forms\Gravity_Forms_GoogleDocs\GFGoogleDocs::get_instance()
 		: false;
 }
-
-register_activation_hook(
-	__FILE__,
-	function () {
-		if ( ! is_readable( gf_googledocs_get_vendor_autoload_path() ) ) {
-			wp_die(
-				esc_html__(
-					'Google Docs for Gravity Forms requires the `vendor` directory from this package. Run `composer install` in the plugin directory or use a full release zip.',
-					'gravityformsgoogledocs'
-				),
-				esc_html__( 'Plugin Activation Error', 'gravityformsgoogledocs' ),
-				array( 'back_link' => true )
-			);
-		}
-	}
-);

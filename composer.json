@@ -1,23 +1,5 @@
 {
     "name": "gravityranger/gravityformsgoogledocs-addon",
-    "description": "Google Docs Add-On for Gravity Forms",
-    "type": "wordpress-plugin",
-    "require": {},
-    "require-dev": {
-        "google/apiclient": "^2.15"
-    },
-    "config": {
-        "platform": {
-            "php": "7.4"
-        }
-    },
-    "scripts": {
-        "pre-autoload-dump": "Google\\Task\\Composer::cleanup"
-    },
-    "extra": {
-        "google/apiclient-services": [
-            "Docs",
-            "Drive"
-        ]
-    }
+    "description": "Google Docs Add-On for Gravity Forms — uses Google OAuth 2.0 and REST via WordPress HTTP API (no Composer runtime).",
+    "type": "wordpress-plugin"
 }
