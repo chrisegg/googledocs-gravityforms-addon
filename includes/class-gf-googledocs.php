@@ -689,7 +689,16 @@ class GFGoogleDocs extends \GFFeedAddOn {
                 );
 
                 if ( defined( 'GF_GOOGLE_DOCS_DEBUG' ) && GF_GOOGLE_DOCS_DEBUG ) {
-                    $this->log_debug( __METHOD__ . '(): Document created successfully. ID: ' . $doc_id );
+                    $this->log_debug(
+                        __METHOD__ . '(): Document created successfully.'
+                            . ' Form #' . $form_id . ': ' . (string) rgar( $form, 'title' )
+                            . ' | Entry #' . rgar( $entry, 'id' )
+                            . ' | Feed #' . rgar( $feed, 'id' ) . ': ' . (string) rgars( $feed, 'meta/feedName' )
+                            . ' | Document title: ' . $document_title
+                            . ' | Document ID: ' . $doc_id
+                            . ' | URL: ' . $doc_url
+                            . ( rgblank( $folder_id ) ? '' : ' | Folder ID: ' . $folder_id )
+                    );
                 }
 
                 return $entry;
